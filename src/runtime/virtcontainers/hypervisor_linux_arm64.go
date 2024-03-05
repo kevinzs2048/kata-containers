@@ -7,21 +7,28 @@ package virtcontainers
 /*
 #include <linux/kvm.h>
 
-const int ioctl_KVM_CREATE_VM = KVM_CREATE_VM;
-const int ioctl_KVM_CHECK_EXTENSION = KVM_CHECK_EXTENSION;
-const int ARM_RME_ID = KVM_CAP_ARM_RME;
-const int ARM_RME_DESC = "Realm Management Extension";
+const int KVM_CAP_ARM_RME_ID = KVM_CAP_ARM_RME;
 */
 import "C"
 
+import (
+    "syscall"
+    "github.com/sirupsen/logrus"
+)
+
+// variables rather than consts to allow tests to modify them
+var (
+	kvmDevice = "/dev/kvm"
+)
+
 // Guest protection is not supported on ARM64.
 func availableGuestProtection() (guestProtection, error) {
-	ret, err = checkKVMExtensionsRME()
+	ret, err := checkKVMExtensionsRME()
 	if err != nil {
 		return noneProtection, err
 	}
-	if ret == 1 {
-		return ccaProtection, nil
+	if ret == true {
+		return rmeProtection, nil
 	} else {
 		return noneProtection, nil
 	}
@@ -37,21 +44,24 @@ func checkKVMExtensionsRME() (bool, error) {
 	}
 	defer syscall.Close(kvm)
 
-	fields := logrus.Fields{
+	logger := hvLogger.WithFields(logrus.Fields{
 		"type":        "kvm extension",
-		"description": ARM_RME_DESC,
-		"id":          ARM_RME_ID,
-	}
+		"description": "Realm Management Extension",
+		"id":          C.KVM_CAP_ARM_RME_ID,
+	})
 	ret, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
 		uintptr(kvm),
-		uintptr(C.ioctl_KVM_CHECK_EXTENSION),
-		uintptr(KVM_CAP_ARM_RME_ID))
+		uintptr(C.KVM_CHECK_EXTENSION),
+		uintptr(C.KVM_CAP_ARM_RME_ID))
 
 	// Generally return value(ret) 0 means no and 1 means yes,
 	// but some extensions may report additional information in the integer return value.
 	if errno != 0 {
-		kataLog.WithFields(fields).Error("is not supported")
+		logger.Error("is not supported")
 		return false, errno
 	}
-	return ret, nil
+	if ret == 1 {
+                return true, nil
+	}
+	return false, nil
 }
