@@ -172,7 +172,7 @@ func (q *qemuArm64) enableProtection() error {
 	if q.qemuMachine.Options != "" {
 		q.qemuMachine.Options += ","
 	}
-	q.qemuMachine.Options += "confidential-guest-support=rme0"
+	q.qemuMachine.Options += "confidential-guest-support=rme0,acpi=off"
 	logger.Info("Enabling Arm CCA Realm protection")
 	return nil
 }
