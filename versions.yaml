@@ -110,6 +110,11 @@ assets:
       url: "https://github.com/AMDESE/qemu"
       tag: "b6ee1218e6c9b98a556841615dd10d094e648393"
 
+    qemu-cca-experimental:
+      description: "QEMU with experimental CCA support"
+      url: "https://git.codelinaro.org/linaro/dcap/qemu.git"
+      tag: "51800b27534e7cbd49c5e40c654357fe8c724554"
+
     stratovirt:
       description: "StratoVirt is an lightweight opensource VMM"
       url: "https://github.com/openeuler-mirror/stratovirt"
@@ -124,6 +129,9 @@ assets:
       aarch64:
         name: &default-image-name "ubuntu"
         version: &default-image-version "latest"
+        cca:
+          name: *default-image-name
+          version: *default-image-version
       ppc64le:
         name: *default-image-name
         version: *default-image-version
@@ -148,6 +156,9 @@ assets:
       aarch64:
         name: &default-initrd-name "alpine"
         version: &default-initrd-version "3.18"
+        cca:
+          name: *default-initrd-name
+          version: *default-initrd-version
       # Do not use Alpine on ppc64le & s390x, the agent cannot use musl because
       # there is no such Rust target
       ppc64le:
@@ -179,6 +190,10 @@ assets:
     description: "Linux kernel with cpu/mem hotplug support on arm64"
     url: "https://cdn.kernel.org/pub/linux/kernel/v5.x/"
     version: "v5.15.138"
+    confidential:
+      description: "Linux kernel with cpu/mem hotplug support on arm64"
+      url: "https://gitlab.arm.com/linux-arm/linux-cca"
+      version: "fcfc92d6ff07f89135f165866c90f42833a5eaf9"
 
   kernel-dragonball-experimental:
     description: "Linux kernel with Dragonball VMM optimizations like upcall"
@@ -195,8 +210,8 @@ externals:
 
   coco-guest-components:
     description: "Provides attested key unwrapping for image decryption"
-    url: "https://github.com/confidential-containers/guest-components/"
-    version: "42b7c9687ecd0907ef70da31cf290a60ee8432cd"
+    url: "https://github.com/mathias-arm/guest-components/"
+    version: "2c63e86ef433aebfbef28859076fdd7ba60475a4"
     toolchain: "1.72.0"
 
   coco-kbs:

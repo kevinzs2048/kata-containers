@@ -109,13 +109,16 @@ options:
 	ovmf
 	ovmf-sev
 	qemu
+	qemu-cca-experimental
 	qemu-snp-experimental
 	qemu-tdx-experimental
 	stratovirt
 	rootfs-image
 	rootfs-image-confidential
+	rootfs-image-cca
 	rootfs-initrd
 	rootfs-initrd-confidential
+	rootfs-initrd-cca
 	rootfs-initrd-mariner
 	runk
 	shim-v2
@@ -264,6 +267,16 @@ get_latest_kernel_confidential_artefact_and_builder_image_version() {
 		echo "${latest_kernel_artefact}-${latest_kernel_builder_image}"
 }
 
+get_latest_kernel_cca_experimental_artefact_and_builder_image_version() {
+		local kernel_version=$(get_from_kata_deps "assets.kernel-cca.confidential.version")
+		local kernel_kata_config_version="$(cat ${repo_root_dir}/tools/packaging/kernel/kata_config_version)"
+		local latest_kernel_artefact="${kernel_version}-${kernel_kata_config_version}-$(get_last_modification $(dirname $kernel_builder))"
+		local latest_kernel_builder_image="$(get_kernel_image_name)"
+
+		echo "${latest_kernel_artefact}-${latest_kernel_builder_image}"
+}
+
+
 #Install guest image
 install_image() {
 	local variant="${1:-}"
@@ -295,6 +308,14 @@ install_image() {
 		latest_artefacts+="-$(get_latest_pause_image_artefact_and_builder_image_version)"
 	fi
 
+	if [ "${variant}" == "cca" ]; then
+		# For the confidential image we depend on the kernel built in order to ensure that
+		# measured boot is used
+		latest_artefacts+="-$(get_latest_kernel_confidential_artefact_and_builder_image_version)"
+		latest_artefacts+="-$(get_latest_coco_guest_components_artefact_and_builder_image_version)"
+		latest_artefacts+="-$(get_latest_pause_image_artefact_and_builder_image_version)"
+	fi
+
 	latest_builder_image=""
 
 	install_cached_tarball_component \
@@ -311,7 +332,7 @@ install_image() {
 		os_name="$(get_from_kata_deps "assets.image.architecture.${ARCH}.${variant}.name")"
 		os_version="$(get_from_kata_deps "assets.image.architecture.${ARCH}.${variant}.version")"
 
-		if [ "${variant}" == "confidential" ]; then
+		if [ "${variant}" == "confidential" -o "${variant}" == "cca" ]; then
 			export COCO_GUEST_COMPONENTS_TARBALL="$(get_coco_guest_components_tarball_path)"
 			export PAUSE_IMAGE_TARBALL="$(get_pause_image_tarball_path)"
 		fi
@@ -329,6 +350,13 @@ install_image_confidential() {
 	export AGENT_POLICY=yes
 	export MEASURED_ROOTFS=yes
 	install_image "confidential"
+}
+
+#Install guest image for CCA guests
+install_image_cca() {
+	export AGENT_POLICY=yes
+	export MEASURED_ROOTFS=yes
+	install_image "cca"
 }
 
 #Install guest initrd
@@ -361,6 +389,14 @@ install_initrd() {
 		latest_artefacts+="-$(get_latest_pause_image_artefact_and_builder_image_version)"
 	fi
 
+	if [ "${variant}" == "confidential" ]; then
+		# For the confidential initrd we depend on the kernel built in order to ensure that
+		# measured boot is used
+		latest_artefacts+="-$(get_latest_kernel_cca_experimental_artefact_and_builder_image_version)"
+		latest_artefacts+="-$(get_latest_coco_guest_components_artefact_and_builder_image_version)"
+		latest_artefacts+="-$(get_latest_pause_image_artefact_and_builder_image_version)"
+	fi
+
 	latest_builder_image=""
 
 	[[ "${ARCH}" == "aarch64" && "${CROSS_BUILD}" == "true" ]] && echo "warning: Don't cross build initrd for aarch64 as it's too slow" && exit 0
@@ -379,7 +415,7 @@ install_initrd() {
 		os_name="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.${variant}.name")"
 		os_version="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.${variant}.version")"
 
-		if [ "${variant}" == "confidential" ]; then
+		if [ "${variant}" == "confidential" -o "${variant}" == "cca" ]; then
 			export COCO_GUEST_COMPONENTS_TARBALL="$(get_coco_guest_components_tarball_path)"
 			export PAUSE_IMAGE_TARBALL="$(get_pause_image_tarball_path)"
 		fi
@@ -397,6 +433,13 @@ install_initrd_confidential() {
 	export AGENT_POLICY=yes
 	export MEASURED_ROOTFS=yes
 	install_initrd "confidential"
+}
+
+#Install guest initrd for confidential guests
+install_initrd_cca() {
+	export AGENT_POLICY=yes
+	export MEASURED_ROOTFS=yes
+	install_initrd "cca"
 }
 
 #Install Mariner guest initrd
@@ -486,6 +529,18 @@ install_kernel_confidential() {
 		"-x -u ${kernel_url}"
 }
 
+install_kernel_cca_experimental() {
+	local kernel_url="$(get_from_kata_deps assets.kernel-arm-experimental.confidential.url)"
+	local kernel_version="$(get_from_kata_deps assets.kernel-arm-experimental.confidential.version)"
+
+	export MEASURED_ROOTFS=yes
+
+	install_kernel_helper \
+		"assets.kernel-arm-experimental.confidential.version" \
+		"kernel-cca-experimental" \
+		"-x -f -U ${kernel_url} -V ${kernel_version} -s"
+}
+
 install_kernel_dragonball_experimental() {
 	install_kernel_helper \
 		"assets.kernel-dragonball-experimental.version" \
@@ -546,6 +601,17 @@ install_qemu() {
 		"assets.hypervisor.qemu.version" \
 		"qemu" \
 		"${qemu_builder}"
+}
+
+install_qemu_cca_experimental() {
+	export qemu_suffix="cca-experimental"
+	export qemu_tarball_name="kata-static-qemu-${qemu_suffix}.tar.gz"
+
+	install_qemu_helper \
+		"assets.hypervisor.qemu-${qemu_suffix}.url" \
+		"assets.hypervisor.qemu-${qemu_suffix}.tag" \
+		"qemu-${qemu_suffix}" \
+		"${qemu_experimental_builder}"
 }
 
 install_qemu_tdx_experimental() {
@@ -974,6 +1040,7 @@ handle_build() {
 		install_ovmf
 		install_ovmf_sev
 		install_qemu
+		install_qemu_cca_experimental
 		install_qemu_snp_experimental
 		install_qemu_tdx_experimental
 		install_stratovirt
@@ -1010,6 +1077,8 @@ handle_build() {
 
 	kernel-confidential) install_kernel_confidential ;;
 
+	kernel-cca-experimental) install_kernel_cca_experimental ;;
+
 	kernel-dragonball-experimental) install_kernel_dragonball_experimental ;;
 
 	kernel-nvidia-gpu) install_kernel_nvidia_gpu ;;
@@ -1026,6 +1095,8 @@ handle_build() {
 
 	qemu) install_qemu ;;
 
+	qemu-cca-experimental) install_qemu_cca_experimental ;;
+
 	qemu-snp-experimental) install_qemu_snp_experimental ;;
 
 	qemu-tdx-experimental) install_qemu_tdx_experimental ;;
@@ -1036,9 +1107,13 @@ handle_build() {
 
 	rootfs-image-confidential) install_image_confidential ;;
 
+	rootfs-image-cca) install_image_cca ;;
+
 	rootfs-initrd) install_initrd ;;
 
 	rootfs-initrd-confidential) install_initrd_confidential ;;
+
+	rootfs-initrd-cca) install_initrd_cca ;;
 
 	rootfs-initrd-mariner) install_initrd_mariner ;;
 
