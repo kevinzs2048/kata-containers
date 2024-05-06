@@ -169,7 +169,7 @@ rootfs-image-confidential-tarball: agent-opa-tarball pause-image-tarball coco-gu
 	${MAKE} $@-build
 
 rootfs-image-cca-tarball: agent-opa-tarball pause-image-tarball \
-	coco-guest-components-tarball # kernel-cca-experiment-tarball
+	coco-guest-components-tarball kernel-cca-experimental-tarball
 	${MAKE} $@-build
 
 rootfs-initrd-mariner-tarball: agent-opa-tarball
@@ -179,7 +179,7 @@ rootfs-initrd-confidential-tarball: agent-opa-tarball pause-image-tarball coco-g
 	${MAKE} $@-build
 
 rootfs-initrd-cca-tarball: agent-opa-tarball pause-image-tarball \
-	coco-guest-components-tarball # kernel-cca-experimental-tarball
+	coco-guest-components-tarball kernel-cca-experimental-tarball
 	${MAKE} $@-build
 
 rootfs-initrd-tarball: agent-tarball
