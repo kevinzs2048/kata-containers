@@ -109,7 +109,9 @@ Options:
 	-s          	: Skip .config checks
 	-t <hypervisor>	: Hypervisor_target.
 	-u <url>	: Kernel URL to be used to download the kernel tarball.
+	-U <git_url>	: Kernel Git URL to be used to download the kernel tarball.
 	-v <version>	: Kernel version to use if kernel path not provided.
+	-V <git_rev>	: Kernel Git revision to be used to checkout kernel.
 	-x       	: All the confidential guest protection type for a specific architecture.
 EOF
 	exit "$exit_code"
@@ -156,11 +158,34 @@ get_tee_kernel() {
 	tar --strip-components=1 -xf ${kernel_tarball} -C ${kernel_path}
 }
 
+get_git_kernel() {
+	local version="${1}"
+	local kernel_path="${2}"
+	local tee="${3}"
+
+	if [ -d "${kernel_path}" ] ; then
+		pushd "${kernel_path}" ;
+		git fetch ;
+		popd ;
+	else
+		git clone ${kernel_git} ${kernel_path} ;
+	fi
+	pushd "${kernel_path}"
+	git checkout ${kernel_revision}
+	popd
+}
+
 get_kernel() {
 	local version="${1:-}"
 
 	local kernel_path=${2:-}
 	[ -n "${kernel_path}" ] || die "kernel_path not provided"
+
+	if [ "${kernel_git}" != "" ]; then
+		get_git_kernel ${version} ${kernel_path} ${conf_guest}
+		return
+	fi
+
 	[ ! -d "${kernel_path}" ] || die "kernel_path already exist"
 
 	if [ "${conf_guest}" != "" ]; then
@@ -288,10 +313,13 @@ get_kernel_frag_path() {
 		info "Enabling config for '${conf_guest}' confidential guest protection"
 		local conf_configs="$(ls ${arch_path}/${conf_guest}/*.conf)"
 		all_configs="${all_configs} ${conf_configs}"
+
+		if [ -f "${arch_path}/${conf_guest}/.config" ]; then
+			cp "${arch_path}/${conf_guest}/.config" ${config_path}
+		fi
 	fi
 
 	info "Constructing config from fragments: ${config_path}"
-
 
 	export KCONFIG_CONFIG=${config_path}
 	export ARCH=${arch_target}
@@ -344,7 +372,6 @@ get_kernel_frag_path() {
 # - arg4: kernel source path
 get_default_kernel_config() {
 	local version="${1}"
-
 	local hypervisor="$2"
 	local kernel_arch="$3"
 	local kernel_path="$4"
@@ -541,7 +568,7 @@ install_kata() {
 }
 
 main() {
-	while getopts "a:b:c:deEfg:hH:k:mp:t:u:v:x" opt; do
+	while getopts "a:b:c:deEfg:hH:k:mp:s:t:u:U:v:V:x" opt; do
 		case "$opt" in
 			a)
 				arch_target="${OPTARG}"
@@ -593,8 +620,14 @@ main() {
 			u)
 				kernel_url="${OPTARG}"
 				;;
+			U)
+				kernel_git="${OPTARG}"
+				;;
 			v)
 				kernel_version="${OPTARG}"
+				;;
+			V)
+				kernel_revision="${OPTARG}"
 				;;
 			x)
 				conf_guest="confidential"
@@ -613,7 +646,7 @@ main() {
 		if [ -n "$kernel_version" ];  then
 			kernel_major_version=$(get_major_kernel_version "${kernel_version}")
 			if [[ ${kernel_major_version} != "5.10" ]]; then
-				info "dragonball-experimental kernel patches are only tested on 5.10.x kernel now, other kernel version may cause confliction"	
+				info "dragonball-experimental kernel patches are only tested on 5.10.x kernel now, other kernel version may cause confliction"
 			fi
 		fi
 	fi

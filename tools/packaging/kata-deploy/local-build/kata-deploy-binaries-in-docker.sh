@@ -125,6 +125,7 @@ docker run \
 	--env MEASURED_ROOTFS="${MEASURED_ROOTFS}" \
 	--env USE_CACHE="${USE_CACHE}" \
 	--env AA_KBC="${AA_KBC:-}" \
+	--env TEE_PLATFORM="${TEE_PLATFORM:-}" \
 	--env HKD_PATH="$(realpath "${HKD_PATH:-}" 2> /dev/null || true)" \
 	--env SE_KERNEL_PARAMS="${SE_KERNEL_PARAMS:-}" \
 	--env CROSS_BUILD="${CROSS_BUILD}" \

@@ -19,6 +19,8 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/
 
 COPY install_go_rust.sh /usr/bin/install_go_rust.sh
+COPY kernel-headers.tar.gz /tmp
+RUN tar zxf /tmp/kernel-headers.tar.gz -C /usr
 ARG GO_VERSION
 ARG RUST_VERSION
 RUN install_go_rust.sh "${GO_VERSION}" "${RUST_VERSION}"
