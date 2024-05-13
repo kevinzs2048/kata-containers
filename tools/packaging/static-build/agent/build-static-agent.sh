@@ -12,6 +12,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${script_dir}/../../scripts/lib.sh"
 
+SECCOMP=${SECCOMP:-yes}
+
 init_env() {
 	source "$HOME/.cargo/env"
 
@@ -37,8 +39,6 @@ init_env() {
 	esac
 	rustup target add ${rust_arch}-unknown-linux-${LIBC}
 
-	export LIBSECCOMP_LINK_TYPE=static
-	export LIBSECCOMP_LIB_PATH=/usr/lib
 }
 
 build_agent_from_source() {
@@ -46,11 +46,15 @@ build_agent_from_source() {
 
 	init_env
 
-	/usr/bin/install_libseccomp.sh /usr /usr
+	if [ ${SECCOMP} = yes ] ; then \
+		export LIBSECCOMP_LINK_TYPE=static
+		export LIBSECCOMP_LIB_PATH=/usr/lib
+		/usr/bin/install_libseccomp.sh /usr /usr ;
+	fi
 
 	cd src/agent
-	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} make
-	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} make install
+	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} SECCOMP=${SECCOMP} make
+	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} SECCOMP=${SECCOMP} make install
 }
 
 build_agent_from_source $@

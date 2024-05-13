@@ -89,6 +89,7 @@ options:
 	all
 	agent
 	agent-opa
+	agent-cca
 	agent-ctl
 	boot-image-se
 	coco-guest-components
@@ -830,6 +831,7 @@ install_ovmf_sev() {
 
 install_agent_helper() {
 	agent_policy="${1:-no}"
+	seccomp="${2:-yes}"
 
 	latest_artefact="$(git log -1 --pretty=format:"%h" ${repo_root_dir}/src/agent)"
 	latest_builder_image="$(get_agent_image_name)"
@@ -848,7 +850,7 @@ install_agent_helper() {
 	export GPERF_URL="$(get_from_kata_deps "externals.gperf.url")"
 
 	info "build static agent"
-	DESTDIR="${destdir}" AGENT_POLICY=${agent_policy} "${agent_builder}"
+	DESTDIR="${destdir}" AGENT_POLICY=${agent_policy} SECCOMP=${seccomp} "${agent_builder}"
 }
 
 install_agent() {
@@ -857,6 +859,10 @@ install_agent() {
 
 install_agent_opa() {
 	install_agent_helper "yes"
+}
+
+install_agent_cca() {
+	install_agent_helper "yes" "no"
 }
 
 install_coco_guest_components() {
@@ -1054,6 +1060,8 @@ handle_build() {
 	agent) install_agent ;;
 
 	agent-opa) install_agent_opa ;;
+
+	agent-cca) install_agent_cca ;;
 
 	agent-ctl) install_agent_ctl ;;
 

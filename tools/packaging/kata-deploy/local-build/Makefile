@@ -90,6 +90,9 @@ agent-tarball: copy-scripts-for-the-agent-build
 agent-opa-tarball: copy-scripts-for-the-agent-build
 	${MAKE} $@-build
 
+agent-cca-tarball: copy-scripts-for-the-agent-build
+	${MAKE} $@-build
+
 agent-ctl-tarball:
 	${MAKE} $@-build
 
@@ -168,7 +171,7 @@ rootfs-image-tarball: agent-tarball
 rootfs-image-confidential-tarball: agent-opa-tarball pause-image-tarball coco-guest-components-tarball kernel-confidential-tarball
 	${MAKE} $@-build
 
-rootfs-image-cca-tarball: agent-opa-tarball pause-image-tarball \
+rootfs-image-cca-tarball: agent-cca-tarball pause-image-tarball \
 	coco-guest-components-tarball kernel-cca-experimental-tarball
 	${MAKE} $@-build
 
@@ -178,7 +181,7 @@ rootfs-initrd-mariner-tarball: agent-opa-tarball
 rootfs-initrd-confidential-tarball: agent-opa-tarball pause-image-tarball coco-guest-components-tarball kernel-confidential-tarball
 	${MAKE} $@-build
 
-rootfs-initrd-cca-tarball: agent-opa-tarball pause-image-tarball \
+rootfs-initrd-cca-tarball: agent-cca-tarball pause-image-tarball \
 	coco-guest-components-tarball kernel-cca-experimental-tarball
 	${MAKE} $@-build
 
