@@ -46,6 +46,7 @@ else ifeq ($(ARCH), aarch64)
 BASE_TARBALLS = serial-targets \
 	qemu-cca-experimental-tarball \
 	virtiofsd-tarball \
+	shim-v2-tarball \
 	# kernel-cca-experimental-tarball
 BASE_SERIAL_TARBALLS = \
 	rootfs-image-cca-tarball \
