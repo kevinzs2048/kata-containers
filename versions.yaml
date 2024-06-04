@@ -113,7 +113,7 @@ assets:
     qemu-cca-experimental:
       description: "QEMU with experimental CCA support"
       url: "https://git.codelinaro.org/linaro/dcap/qemu.git"
-      tag: "51800b27534e7cbd49c5e40c654357fe8c724554"
+      tag: "7c8d8e38ba3aee2a4f844130a1d4ca878dae2240"
 
     stratovirt:
       description: "StratoVirt is an lightweight opensource VMM"
