@@ -2895,7 +2895,7 @@ func (config *Config) appendMachine() {
 func (config *Config) appendCPUModel() {
 	if config.CPUModel != "" {
 		config.qemuParams = append(config.qemuParams, "-cpu")
-		config.qemuParams = append(config.qemuParams, config.CPUModel)
+		config.qemuParams = append(config.qemuParams, "max")
 	}
 }
 
