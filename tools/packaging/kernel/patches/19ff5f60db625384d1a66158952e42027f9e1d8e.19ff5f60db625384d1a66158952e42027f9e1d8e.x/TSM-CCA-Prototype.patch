@@ -1,0 +1,550 @@
+From b8b96579cc74cc757983e350f4224dc099247136 Mon Sep 17 00:00:00 2001
+From: Sami Mujawar <sami.mujawar@arm.com>
+Date: Thu, 19 Oct 2023 16:54:43 +0100
+Subject: [PATCH] arm64: validate pointer before dereferencing
+
+The rsi_set_addr_range_state() returns the top of
+the address range as an out parameter. Add a check
+to test that the out pointer is not NULL before
+setting the value.
+
+Signed-off-by: Sami Mujawar <sami.mujawar@arm.com>
+---
+ arch/arm64/include/asm/rsi_cmds.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/include/asm/rsi_cmds.h b/arch/arm64/include/asm/rsi_cmds.h
+index 0e7483ebf573d..b4cbeafa2f41a 100644
+--- a/arch/arm64/include/asm/rsi_cmds.h
++++ b/arch/arm64/include/asm/rsi_cmds.h
+@@ -60,7 +60,9 @@ static inline unsigned long rsi_set_addr_range_state(phys_addr_t start,
+ 				   start, end, state, RSI_NO_CHANGE_DESTROYED,
+ 				   &res);
+ 
+-	*top = res.a1;
++	if (top)
++		*top = res.a1;
++
+ 	return res.a0;
+ }
+ 
+-- 
+GitLab
+
+From 4f3845937c5c320de16669c5734f8d4c0ef23a90 Mon Sep 17 00:00:00 2001
+From: Sami Mujawar <sami.mujawar@arm.com>
+Date: Tue, 19 Dec 2023 15:21:42 +0000
+Subject: [PATCH] arm64: rsi: Fix header docs for RMM 1.0-eac5
+
+Fix the documentation for the RSI FIDs for
+attestation token init and continue commands
+to reflect the RMM 1.0-eac5 updates.
+
+Signed-off-by: Sami Mujawar <sami.mujawar@arm.com>
+---
+ arch/arm64/include/asm/rsi_smc.h | 22 ++++++++++++----------
+ 1 file changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm64/include/asm/rsi_smc.h b/arch/arm64/include/asm/rsi_smc.h
+index f1f04a7052a74..c2c9a3dfed48b 100644
+--- a/arch/arm64/include/asm/rsi_smc.h
++++ b/arch/arm64/include/asm/rsi_smc.h
+@@ -42,23 +42,25 @@
+ #define SMC_RSI_ABI_VERSION			SMC_RSI_FID(0x190)
+ 
+ /*
+- * arg1 == The IPA of token buffer
+- * arg2 == Challenge value, bytes:  0 -  7
+- * arg3 == Challenge value, bytes:  7 - 15
+- * arg4 == Challenge value, bytes: 16 - 23
+- * arg5 == Challenge value, bytes: 24 - 31
+- * arg6 == Challenge value, bytes: 32 - 39
+- * arg7 == Challenge value, bytes: 40 - 47
+- * arg8 == Challenge value, bytes: 48 - 55
+- * arg9 == Challenge value, bytes: 56 - 63
++ * arg1 == Challenge value, bytes:  0 -  7
++ * arg2 == Challenge value, bytes:  7 - 15
++ * arg3 == Challenge value, bytes: 16 - 23
++ * arg4 == Challenge value, bytes: 24 - 31
++ * arg5 == Challenge value, bytes: 32 - 39
++ * arg6 == Challenge value, bytes: 40 - 47
++ * arg7 == Challenge value, bytes: 48 - 55
++ * arg8 == Challenge value, bytes: 56 - 63
+  * ret0 == Status / error
++ * ret1 == Upper bound of token size in bytes
+  */
+ #define SMC_RSI_ATTESTATION_TOKEN_INIT		SMC_RSI_FID(0x194)
+ 
+ /*
+  * arg1 == The IPA of token buffer
++ * arg2 == Offset within the granule of the token buffer
++ * arg3 == Size of the granule buffer
+  * ret0 == Status / error
+- * ret1 == Size of completed token in bytes
++ * ret1 == Length of token bytes copied to the granule buffer
+  */
+ #define SMC_RSI_ATTESTATION_TOKEN_CONTINUE	SMC_RSI_FID(0x195)
+ 
+-- 
+GitLab
+
+From 8243012b553825415d97e2ec9fffde4bc2e45bbf Mon Sep 17 00:00:00 2001
+From: Sami Mujawar <sami.mujawar@arm.com>
+Date: Fri, 8 Sep 2023 14:38:06 +0100
+Subject: [PATCH] arm64: rsi: Interfaces to query attestation token
+
+Add interfaces to query the attestation token using
+the RSI calls.
+
+Signed-off-by: Sami Mujawar <sami.mujawar@arm.com>
+---
+ arch/arm64/include/asm/rsi_cmds.h | 87 +++++++++++++++++++++++++++++++
+ 1 file changed, 87 insertions(+)
+
+diff --git a/arch/arm64/include/asm/rsi_cmds.h b/arch/arm64/include/asm/rsi_cmds.h
+index b4cbeafa2f41a..75108aef0a91c 100644
+--- a/arch/arm64/include/asm/rsi_cmds.h
++++ b/arch/arm64/include/asm/rsi_cmds.h
+@@ -10,6 +10,9 @@
+ 
+ #include <asm/rsi_smc.h>
+ 
++#define GRANULE_SHIFT		12
++#define GRANULE_SIZE		(_AC(1, UL) << GRANULE_SHIFT)
++
+ enum ripas {
+ 	RSI_RIPAS_EMPTY,
+ 	RSI_RIPAS_RAM,
+@@ -66,4 +69,88 @@ static inline unsigned long rsi_set_addr_range_state(phys_addr_t start,
+ 	return res.a0;
+ }
+ 
++/**
++ * rsi_attestation_token_init - Initialise the operation to retrieve an
++ * attestation token.
++ *
++ * @challenge:     The challenge data to be used in the attestation token
++ *                 generation.
++ * @challengesize: Size of the challenge data in bytes.
++ * @maxtokensize:  Upper bound on attestation token size in bytes.
++ *
++ * Initialises the attestation token generation and returns an upper bound
++ * on the attestation token size that can be used to allocate an adequate
++ * buffer. The caller is expected to subsequently call
++ * rsi_attestation_token_continue() to retrieve the attestation token data.
++ *
++ * Return:
++ * * %RSI_SUCCESS        - Token generation initialised successfully.
++ * * %RSI_ERROR_INPUT    - An input parameter was invalid.
++ */
++static inline int rsi_attestation_token_init(const u8 *challenge,
++					     unsigned long  challengesize,
++					     unsigned long  *maxtokensize)
++{
++	struct arm_smccc_1_2_regs regs = { 0 };
++
++	/* See A7.2.2 Attestation token generation, RMM Specification,
++	 * version A-bet0
++	 * IWTKDD - Arm recommends that the challenge should contain at
++	 * least 32 bytes of unique data.
++	 */
++	if (!challenge || challengesize < 32)
++		return RSI_ERROR_INPUT;
++
++	/* See A7.2.2 Attestation token generation, RMM Specification,
++	 * version A-bet0
++	 * IWTKDD - If the size of the challenge provided by the relying
++	 * party is less than 64 bytes, it should be zero-padded
++	 * prior to calling RSI_ATTESTATION_TOKEN_INIT.
++	 * This requirement is satisfied as the regs structure is zero
++	 * initialised before coping the challenge data.
++	 */
++	regs.a0 = SMC_RSI_ATTESTATION_TOKEN_INIT;
++	memcpy(&regs.a1, challenge, challengesize);
++	arm_smccc_1_2_smc(&regs, &regs);
++
++	/* RMM v1.0-eac5: return upper bound on token size.*/
++	if (maxtokensize)
++		*maxtokensize = regs.a1;
++	return regs.a0;
++}
++
++/**
++ * rsi_attestation_token_continue - Continue the operation to retrieve an
++ * attestation token.
++ *
++ * @granule: IPA of the Granule to which the token will be written.
++ * @offset:  Offset within Granule to start of buffer in bytes.
++ * @size:    The size of the buffer.
++ * @len:     The number of bytes written to the buffer.
++ *
++ * Retrieves up to a granule worth of token data per call. The caller is
++ * expected to call rsi_attestation_token_init() before calling this function
++ * to retrieve the attestation token.
++ *
++ * Return:
++ * * %RSI_SUCCESS     - Attestation token retrieved successfully.
++ * * %RSI_INCOMPLETE  - Token generation is not complete.
++ * * %RSI_ERROR_INPUT - A parameter was not valid.
++ * * %RSI_ERROR_STATE - Attestation not in progress.
++ */
++static inline int rsi_attestation_token_continue(unsigned long  granule,
++						 unsigned long offset,
++						 unsigned long size,
++						 unsigned long *len)
++{
++	struct arm_smccc_res res;
++
++	arm_smccc_1_1_invoke(SMC_RSI_ATTESTATION_TOKEN_CONTINUE,
++			     granule, offset, size, 0, &res);
++
++	if (len)
++		*len = res.a1;
++	return res.a0;
++}
++
+ #endif
+-- 
+GitLab
+
+From 8d9a094bab6aec1f32e2699e5d308255ab310ca8 Mon Sep 17 00:00:00 2001
+From: Sami Mujawar <sami.mujawar@arm.com>
+Date: Wed, 6 Sep 2023 13:35:01 +0100
+Subject: [PATCH] virt: arm-cca-guest: TSM_REPORT support for realms
+
+Introduce an arm-cca-guest driver that registers with
+the configfs-tsm module to provide user interfaces for
+retrieving an attestation token.
+
+When a new report is requested the arm-cca-guest driver
+invokes the appropriate RSI interfaces to query an
+attestation token.
+
+The steps to retrieve an attestation token are as follows:
+  1. Mount the configfs filesystem if not already mounted
+     mount -t configfs none /sys/kernel/config
+  2. Generate an attestation token
+     report=/sys/kernel/config/tsm/report/report0
+     mkdir $report
+     dd if=/dev/urandom bs=64 count=1 > $report/inblob
+     hexdump -C $report/outblob
+     rmdir $report
+
+Signed-off-by: Sami Mujawar <sami.mujawar@arm.com>
+---
+ drivers/virt/coco/Kconfig                     |   2 +
+ drivers/virt/coco/Makefile                    |   1 +
+ drivers/virt/coco/arm-cca-guest/Kconfig       |  10 +
+ drivers/virt/coco/arm-cca-guest/Makefile      |   2 +
+ .../virt/coco/arm-cca-guest/arm-cca-guest.c   | 222 ++++++++++++++++++
+ .../virt/coco/arm-cca-guest/arm-cca-guest.h   |  24 ++
+ 6 files changed, 261 insertions(+)
+ create mode 100644 drivers/virt/coco/arm-cca-guest/Kconfig
+ create mode 100644 drivers/virt/coco/arm-cca-guest/Makefile
+ create mode 100644 drivers/virt/coco/arm-cca-guest/arm-cca-guest.c
+ create mode 100644 drivers/virt/coco/arm-cca-guest/arm-cca-guest.h
+
+diff --git a/drivers/virt/coco/Kconfig b/drivers/virt/coco/Kconfig
+index 87d142c1f9321..4fb69804b622e 100644
+--- a/drivers/virt/coco/Kconfig
++++ b/drivers/virt/coco/Kconfig
+@@ -12,3 +12,5 @@ source "drivers/virt/coco/efi_secret/Kconfig"
+ source "drivers/virt/coco/sev-guest/Kconfig"
+ 
+ source "drivers/virt/coco/tdx-guest/Kconfig"
++
++source "drivers/virt/coco/arm-cca-guest/Kconfig"
+diff --git a/drivers/virt/coco/Makefile b/drivers/virt/coco/Makefile
+index 18c1aba5edb79..a6228a1bf9928 100644
+--- a/drivers/virt/coco/Makefile
++++ b/drivers/virt/coco/Makefile
+@@ -6,3 +6,4 @@ obj-$(CONFIG_TSM_REPORTS)	+= tsm.o
+ obj-$(CONFIG_EFI_SECRET)	+= efi_secret/
+ obj-$(CONFIG_SEV_GUEST)		+= sev-guest/
+ obj-$(CONFIG_INTEL_TDX_GUEST)	+= tdx-guest/
++obj-$(CONFIG_ARM_CCA_GUEST)	+= arm-cca-guest/
+diff --git a/drivers/virt/coco/arm-cca-guest/Kconfig b/drivers/virt/coco/arm-cca-guest/Kconfig
+new file mode 100644
+index 0000000000000..afabca04843ff
+--- /dev/null
++++ b/drivers/virt/coco/arm-cca-guest/Kconfig
+@@ -0,0 +1,10 @@
++config ARM_CCA_GUEST
++	tristate "Arm CCA Guest driver"
++	default m
++	select TSM_REPORTS
++	help
++	  The driver provides userspace interface to request and
++	  attestation report from the Realm Management Monitor(RMM).
++
++	  If you choose 'M' here, this module will be called
++	  realm-guest.
+diff --git a/drivers/virt/coco/arm-cca-guest/Makefile b/drivers/virt/coco/arm-cca-guest/Makefile
+new file mode 100644
+index 0000000000000..69eeba08e98a8
+--- /dev/null
++++ b/drivers/virt/coco/arm-cca-guest/Makefile
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: GPL-2.0-only
++obj-$(CONFIG_ARM_CCA_GUEST) += arm-cca-guest.o
+diff --git a/drivers/virt/coco/arm-cca-guest/arm-cca-guest.c b/drivers/virt/coco/arm-cca-guest/arm-cca-guest.c
+new file mode 100644
+index 0000000000000..8339c43d07773
+--- /dev/null
++++ b/drivers/virt/coco/arm-cca-guest/arm-cca-guest.c
+@@ -0,0 +1,222 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (C) 2023 ARM Ltd.
++ */
++
++#include <linux/arm-smccc.h>
++#include <linux/cc_platform.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/smp.h>
++#include <linux/tsm.h>
++#include <linux/types.h>
++
++#include <asm/rsi_smc.h>
++#include <asm/rsi_cmds.h>
++
++#include "arm-cca-guest.h"
++
++/**
++ * arm_cca_attestation_continue - Retrieve the attestation token data.
++ *
++ * @param: pointer to the token information.
++ *
++ * Attestation token generation is a long running operation and therefore
++ * the token data may not be retrieved in a single call. Moreover, the
++ * token retrieval operation must be requested on the same CPU on which the
++ * attestation token generation was initialised.
++ * This helper function is therefore scheduled on the same CPU multiple
++ * times until the entire token data is retrieved.
++ */
++static void arm_cca_attestation_continue(void *param)
++{
++	unsigned long len;
++	unsigned long size;
++	struct arm_cca_token_info *info;
++
++	if (!param)
++		return;
++
++	info = (struct arm_cca_token_info *)param;
++
++	size = GRANULE_SIZE - info->offset;
++	info->result = rsi_attestation_token_continue(info->granule,
++						      info->offset, size, &len);
++
++	info->offset += len;
++}
++
++/**
++ * arm_cca_report_new - Generate a new attestation token.
++ *
++ * @report: pointer to the TSM report context information.
++ * @data:  pointer to the context specific data for this module.
++ *
++ * Initialise the attestation token generation using the challenge data
++ * passed in the TSM decriptor. Allocate memory for the attestation token
++ * and schedule calls to retrieve the attestation token on the same CPU
++ * on which the attestation token generation was initialised.
++ *
++ * Return:
++ * * %0        - Attestation token generated successfully.
++ * * %-EINVAL  - A parameter was not valid.
++ * * %-ENOMEM  - Out of memory.
++ * * %-EFAULT  - Failed to get IPA for memory page(s).
++ * * %A negative status code as returned by smp_call_function_single().
++ */
++static int arm_cca_report_new(struct tsm_report *report, void *data)
++{
++	int ret;
++	int cpu;
++	unsigned long max_size;
++	unsigned long token_size;
++	struct arm_cca_token_info info;
++	void *granule_va;
++
++	u8 *token __free(kvfree) = NULL;
++	struct tsm_desc *desc = &report->desc;
++
++	if (!report)
++		return -EINVAL;
++
++	if (desc->inblob_len < 32 || desc->inblob_len > 64) {
++		pr_err("Incorrect challenge data len = %ld.\n",
++		       desc->inblob_len);
++		return -EINVAL;
++	}
++
++	/* Get a CPU on which the attestation token generation will be
++	 * scheduled and initialise the attestation token generation.
++	 */
++	cpu = get_cpu();
++	ret = rsi_attestation_token_init(desc->inblob, desc->inblob_len,
++					 &max_size);
++	put_cpu();
++
++	if (ret != RSI_SUCCESS) {
++		pr_err("Attestation token init failed.\n");
++		return -EINVAL;
++	}
++
++	/* The RSI attestation token retrival functions require IPA of
++	 * contigious memory page(s) that are aligned to the GRANULE_SIZE
++	 * Therefore, allocate contigious memory page(s) of GRANULE_SIZE
++	 * to retrieve the token data.
++	 */
++	granule_va = alloc_pages_exact(GRANULE_SIZE, GFP_KERNEL);
++	if (!granule_va)
++		return -ENOMEM;
++
++	/* Get the IPA of the memory page(s) that were allocated. */
++	info.granule = (unsigned long)virt_to_phys(granule_va);
++	if (!info.granule) {
++		ret = -EFAULT;
++		goto exit_free_granule_page;
++	}
++
++	pr_debug("Granule VA = 0x%p, IPA = 0x%lx.\n", granule_va, info.granule);
++
++	/* Allocate a buffer to return the token data. */
++	token = kvzalloc(max_size, GFP_KERNEL);
++	if (!token) {
++		ret = -ENOMEM;
++		goto exit_free_granule_page;
++	}
++
++	token_size = 0;
++
++	/* Loop until the token is ready or there is an error. */
++	do {
++		/* Retrieve one granule of data per loop iteration. */
++		info.offset = 0;
++		do {
++			/* Schedule a call to retrieve a sub-granule chunk
++			 * of data per loop iteration.
++			 */
++			ret = smp_call_function_single(cpu,
++						       arm_cca_attestation_continue,
++						       (void *)&info, true);
++			if (ret != 0) {
++				token_size = 0;
++				goto exit_free_granule_page;
++			}
++
++			/* Set the result of the attestation token continue
++			 * operation.
++			 */
++			ret = info.result;
++		} while ((ret == RSI_INCOMPLETE) &&
++			 (info.offset < GRANULE_SIZE));
++
++		if (ret == RSI_INCOMPLETE || ret == RSI_SUCCESS) {
++			/* Copy the retrieved token data from the granule
++			 * to the token buffer.
++			 */
++			memcpy(&token[token_size], granule_va, info.offset);
++			token_size += info.offset;
++		}
++	} while ((ret == RSI_INCOMPLETE) && (token_size < max_size));
++
++	if (ret != RSI_SUCCESS) {
++		pr_err("Attestation token retrieval failed.\n");
++		ret = -EINVAL;
++		token_size = 0;
++		goto exit_free_granule_page;
++	}
++
++	report->outblob = no_free_ptr(token);
++exit_free_granule_page:
++	report->outblob_len = token_size;
++	free_pages_exact(granule_va, GRANULE_SIZE);
++	return ret;
++}
++
++/**
++ * struct tsm_ops - a structure describing the TSM operations.
++ * @name: Name of the module.
++ * @report_new: An interface to generate a new attestation token.
++ */
++static const struct tsm_ops arm_cca_tsm_ops = {
++	.name = KBUILD_MODNAME,
++	.report_new = arm_cca_report_new,
++};
++
++/**
++ * arm_cca_guest_init - Register with the Trusted Security Module (TSM)
++ * interface.
++ *
++ * Return:
++ * * %0        - Registered successfully with the TSM interface.
++ * * %-ENODEV  - The execution context is not an Arm Realm.
++ * * %-EINVAL  - A parameter was not valid.
++ * * %-EBUSY   - Already registered.
++ */
++static int __init arm_cca_guest_init(void)
++{
++	int ret;
++
++	if (!cc_platform_has(CC_ATTR_MEM_ENCRYPT))
++		return -ENODEV;
++
++	ret = tsm_register(&arm_cca_tsm_ops, NULL, &tsm_report_default_type);
++	if (ret < 0)
++		pr_err("Failed to register with TSM.\n");
++
++	return ret;
++}
++module_init(arm_cca_guest_init);
++
++/**
++ * arm_cca_guest_exit - unregister with the Trusted Security Module (TSM)
++ * interface.
++ */
++static void __exit arm_cca_guest_exit(void)
++{
++	tsm_unregister(&arm_cca_tsm_ops);
++}
++module_exit(arm_cca_guest_exit);
++
++MODULE_AUTHOR("Sami Mujawar <sami.mujawar@arm.com>");
++MODULE_VERSION("1.0");
++MODULE_DESCRIPTION("Arm CCA Guest Driver.");
++MODULE_ALIAS("arm-cca-guest");
+diff --git a/drivers/virt/coco/arm-cca-guest/arm-cca-guest.h b/drivers/virt/coco/arm-cca-guest/arm-cca-guest.h
+new file mode 100644
+index 0000000000000..7723ebc65b9ae
+--- /dev/null
++++ b/drivers/virt/coco/arm-cca-guest/arm-cca-guest.h
+@@ -0,0 +1,24 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (C) 2023 ARM Ltd.
++ */
++
++#ifndef __ARM_CCA_GUEST_H__
++#define __ARM_CCA_GUEST_H__
++
++#include <linux/types.h>
++
++/**
++ * struct arm_cca_token_info - a descriptor for the token buffer.
++ * @granule: IPA of the page to which the token will be written
++ * @offset: Offset within granule to start of buffer in bytes
++ * @len: Number of bytes of token data that was retrieved
++ * @result: result of rsi_attestation_token_continue operation
++ */
++struct arm_cca_token_info {
++	unsigned long   granule;
++	unsigned long   offset;
++	int             result;
++};
++
++#endif /* __ARM_CCA_GUEST_H__ */
+-- 
+GitLab
+
