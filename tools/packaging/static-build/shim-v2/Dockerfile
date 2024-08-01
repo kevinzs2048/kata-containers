@@ -15,7 +15,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN mkdir ${RUSTUP_HOME} ${CARGO_HOME} ${GOCACHE} && \
     chmod -R a+rwX ${RUSTUP_HOME} ${CARGO_HOME} ${GO_HOME}
-
+COPY kernel-headers.tar.gz /tmp
+RUN tar zxf /tmp/kernel-headers.tar.gz -C /usr
 ARG GO_VERSION
 ARG RUST_VERSION
 

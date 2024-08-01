@@ -37,6 +37,7 @@ serial_test = "0.5.1"
 vmm-sys-util = "0.11.0"
 epoll = "4.0.1"
 libc = "0.2.138"
+protobuf = "=3.2.0"
 
 # Note: this crate sets the slog 'max_*' features which allows the log level
 # to be modified at runtime.
