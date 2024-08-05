@@ -62,6 +62,7 @@ build_image() {
 		DISTRO="${os_name}" \
 		DEBUG="${DEBUG:-}" \
 		USE_DOCKER="1" \
+		EXTRA_PKGS="net-tools curl openssh-server" \
 		IMG_OS_VERSION="${os_version}" \
 		ROOTFS_BUILD_DEST="${builddir}/rootfs-image" \
 		AGENT_TARBALL="${AGENT_TARBALL}" \

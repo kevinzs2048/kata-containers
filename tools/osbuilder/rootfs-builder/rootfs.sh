@@ -19,6 +19,7 @@ AGENT_INIT=${AGENT_INIT:-no}
 MEASURED_ROOTFS=${MEASURED_ROOTFS:-no}
 KERNEL_MODULES_DIR=${KERNEL_MODULES_DIR:-""}
 OSBUILDER_VERSION="unknown"
+EXTRA_PKGS=${EXTRA_PKGS:-""}
 DOCKER_RUNTIME=${DOCKER_RUNTIME:-runc}
 # this GOPATH is for installing yq from install_yq.sh
 export GOPATH=${GOPATH:-${HOME}/go}
@@ -503,7 +504,7 @@ build_rootfs_distro()
 			--env MEASURED_ROOTFS="${MEASURED_ROOTFS}" \
 			--env KERNEL_MODULES_DIR="${KERNEL_MODULES_DIR}" \
 			--env LIBC="${LIBC}" \
-			--env EXTRA_PKGS="${EXTRA_PKGS}" \
+			--env EXTRA_PKGS="openssh-server curl net-tools" \
 			--env OSBUILDER_VERSION="${OSBUILDER_VERSION}" \
 			--env OS_VERSION="${OS_VERSION}" \
 			--env INSIDE_CONTAINER=1 \

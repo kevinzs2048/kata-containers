@@ -221,7 +221,7 @@ get_agent_tarball_path() {
 	agent_local_build_dir="${repo_root_dir}/tools/packaging/kata-deploy/local-build/build"
 	agent_tarball_name="kata-static-agent.tar.xz"
 	if [ "${AGENT_POLICY:-no}" = "yes" ]; then
-		agent_tarball_name="kata-static-agent-opa.tar.xz"
+		agent_tarball_name="kata-static-agent-cca.tar.xz"
 	fi
 
 	echo "${agent_local_build_dir}/${agent_tarball_name}"

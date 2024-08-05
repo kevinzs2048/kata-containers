@@ -42,5 +42,3 @@ else
 	"${apply_patches}" "${patches_dir}/${stable_branch}"
 fi
 
-echo "Apply patches for specific qemu version ${qemu_version}"
-"${apply_patches}" "${patches_dir}/tag_patches/${qemu_version}"

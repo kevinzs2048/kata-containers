@@ -126,9 +126,9 @@ impl AgentPolicy {
         // OPA service while that service is starting. Future requests to
         // OPA are expected to work without retrying, after connecting
         // successfully for the first time.
-        for i in 0..50 {
+        for i in 0..5000 {
             if i > 0 {
-                sleep(Duration::from_millis(100)).await;
+                sleep(Duration::from_millis(1000)).await;
                 debug!(sl!(), "policy initialize: PUT failed, retrying");
             }
 

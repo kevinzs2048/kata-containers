@@ -47,7 +47,7 @@ BASE_TARBALLS = serial-targets \
 	qemu-cca-experimental-tarball \
 	virtiofsd-tarball \
 	shim-v2-tarball \
-	# kernel-cca-experimental-tarball
+	kernel-cca-experimental-tarball
 BASE_SERIAL_TARBALLS = \
 	rootfs-image-cca-tarball \
 	rootfs-initrd-cca-tarball
@@ -173,8 +173,9 @@ rootfs-image-confidential-tarball: agent-opa-tarball pause-image-tarball coco-gu
 	${MAKE} $@-build
 
 rootfs-image-cca-tarball: agent-cca-tarball pause-image-tarball \
-	coco-guest-components-tarball kernel-cca-experimental-tarball
+	coco-guest-components-tarball
 	${MAKE} $@-build
+
 
 rootfs-initrd-mariner-tarball: agent-opa-tarball
 	${MAKE} $@-build

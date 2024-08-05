@@ -131,7 +131,7 @@ assets:
         version: &default-image-version "latest"
         cca:
           name: *default-image-name
-          version: *default-image-version
+          version: "jammy"
       ppc64le:
         name: *default-image-name
         version: *default-image-version

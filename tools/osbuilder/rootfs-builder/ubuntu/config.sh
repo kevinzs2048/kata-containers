@@ -5,7 +5,8 @@
 source /etc/os-release
 OS_NAME=ubuntu
 # This should be Ubuntu's code name, e.g. "focal" (Focal Fossa) for 20.04
-OS_VERSION=${OS_VERSION:-${UBUNTU_CODENAME}}
+#OS_VERSION=${OS_VERSION:-${UBUNTU_CODENAME}}
+OS_VERSION=jammy
 PACKAGES="chrony iptables dbus"
 [ "$AGENT_INIT" = no ] && PACKAGES+=" init"
 [ "$MEASURED_ROOTFS" = yes ] && PACKAGES+=" cryptsetup-bin e2fsprogs"
