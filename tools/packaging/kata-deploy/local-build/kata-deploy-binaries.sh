@@ -557,6 +557,10 @@ install_kernel_helper() {
 		extra_tarballs+=" ${kernel_headers_tarball_name}:${kernel_headers_tarball_path}"
 	fi
 
+        if [[ "${kernel_name}" == "kernel-cca-experimental" ]]; then
+                kernel_version="$(get_from_kata_deps .assets.kernel-arm-experimental.confidential.version)"
+        fi
+
 	default_patches_dir="${repo_root_dir}/tools/packaging/kernel/patches"
 
 	install_cached_kernel_tarball_component ${kernel_name} ${extra_tarballs} && return 0
