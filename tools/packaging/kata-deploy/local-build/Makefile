@@ -45,7 +45,7 @@ BASE_TARBALLS = serial-targets \
 	qemu-cca-experimental-tarball \
 	virtiofsd-tarball \
 	shim-v2-tarball \
-	# kernel-cca-experimental-tarball
+	kernel-cca-experimental-tarball
 BASE_SERIAL_TARBALLS = \
 	rootfs-image-cca-tarball \
 	rootfs-initrd-cca-tarball

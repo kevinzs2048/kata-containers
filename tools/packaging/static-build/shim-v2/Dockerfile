@@ -16,8 +16,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir ${RUSTUP_HOME} ${CARGO_HOME} ${GOCACHE} && \
     chmod -R a+rwX ${RUSTUP_HOME} ${CARGO_HOME} ${GO_HOME}
 
-COPY kernel-headers.tar.gz /tmp
-RUN tar zxf /tmp/kernel-headers.tar.gz -C /usr
 ARG GO_VERSION
 ARG RUST_VERSION
 
@@ -34,7 +32,10 @@ RUN apt-get update && \
         sudo && \
         apt-get clean && rm -rf /var/lib/apt/lists/&& \
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${RUST_VERSION}
-    
+
+COPY kernel-headers.tar.gz /tmp
+RUN tar zxf /tmp/kernel-headers.tar.gz -C /
+ 
 RUN ARCH=$(uname -m); \
    	rust_arch=""; \
    	libc=""; \
