@@ -40,6 +40,15 @@ BASE_SERIAL_TARBALLS = rootfs-image-tarball \
 	rootfs-initrd-tarball \
 	cloud-hypervisor-tarball \
 	cloud-hypervisor-glibc-tarball
+else ifeq ($(ARCH), aarch64)
+BASE_TARBALLS = serial-targets \
+	qemu-cca-experimental-tarball \
+	virtiofsd-tarball \
+	shim-v2-tarball \
+	# kernel-cca-experimental-tarball
+BASE_SERIAL_TARBALLS = \
+	rootfs-image-cca-tarball \
+	rootfs-initrd-cca-tarball
 else ifeq ($(ARCH), s390x)
 BASE_TARBALLS = serial-targets \
 	kernel-tarball \
@@ -119,6 +128,9 @@ kernel-nvidia-gpu-confidential-tarball:
 kernel-tarball:
 	${MAKE} $@-build
 
+kernel-cca-experimental-tarball:
+	${MAKE} $@-build
+
 kernel-confidential-tarball:
 	${MAKE} $@-build
 
@@ -134,6 +146,9 @@ ovmf-tarball:
 qemu-snp-experimental-tarball:
 	${MAKE} $@-build
 
+qemu-cca-experimental-tarball:
+	${MAKE} $@-build
+
 qemu-tarball:
 	${MAKE} $@-build
 
@@ -147,6 +162,14 @@ rootfs-image-tarball: agent-tarball
 	${MAKE} $@-build
 
 rootfs-image-confidential-tarball: agent-tarball pause-image-tarball coco-guest-components-tarball kernel-confidential-tarball
+	${MAKE} $@-build
+
+rootfs-image-cca-tarball: agent-tarball pause-image-tarball \
+	coco-guest-components-tarball kernel-cca-experimental-tarball
+	${MAKE} $@-build
+
+rootfs-initrd-cca-tarball: agent-tarball pause-image-tarball \
+	coco-guest-components-tarball kernel-cca-experimental-tarball
 	${MAKE} $@-build
 
 rootfs-initrd-mariner-tarball: agent-tarball
