@@ -408,6 +408,7 @@ async fn start_sandbox(
     let (tx, rx) = tokio::sync::oneshot::channel();
     sandbox.lock().await.sender = Some(tx);
 
+    warn!(logger, "attestation init component process");
     let mut cdh_client = None;
     let gc_procs = config.guest_components_procs;
     if gc_procs != GuestComponentsProcs::None {
@@ -417,6 +418,7 @@ async fn start_sandbox(
                 "attestation binaries requested for launch not available"
             );
         } else {
+            warn!(logger, "before init component process");
             cdh_client = init_attestation_components(logger, config)?;
         }
     }
@@ -460,11 +462,13 @@ fn attestation_binaries_available(logger: &Logger, procs: &GuestComponentsProcs)
 // launched in the background and the function will return immediately.
 // If the CDH is started, a CDH client will be instantiated and returned.
 fn init_attestation_components(logger: &Logger, config: &AgentConfig) -> Result<Option<CDHClient>> {
+    warn!(logger, "===in init_attestation_components===0");
     // skip launch of any guest-component
     if config.guest_components_procs == GuestComponentsProcs::None {
         return Ok(None);
     }
 
+    warn!(logger, "===in init_attestation_components===1");
     debug!(logger, "spawning attestation-agent process {}", AA_PATH);
     launch_process(
         logger,
@@ -475,6 +479,7 @@ fn init_attestation_components(logger: &Logger, config: &AgentConfig) -> Result<
     )
     .map_err(|e| anyhow!("launch_process {} failed: {:?}", AA_PATH, e))?;
 
+    warn!(logger, "===in init_attestation_components===2");
     // skip launch of confidential-data-hub and api-server-rest
     if config.guest_components_procs == GuestComponentsProcs::AttestationAgent {
         return Ok(None);
@@ -505,6 +510,7 @@ fn init_attestation_components(logger: &Logger, config: &AgentConfig) -> Result<
     )
     .map_err(|e| anyhow!("launch_process {} failed: {:?}", CDH_PATH, e))?;
 
+    warn!(logger, "===in init_attestation_components===3");
     let cdh_client = CDHClient::new().context("Failed to create CDH Client")?;
 
     // skip launch of api-server-rest
@@ -512,6 +518,7 @@ fn init_attestation_components(logger: &Logger, config: &AgentConfig) -> Result<
         return Ok(Some(cdh_client));
     }
 
+    warn!(logger, "===in init_attestation_components===4");
     let features = config.guest_components_rest_api;
     debug!(
         logger,
@@ -526,6 +533,7 @@ fn init_attestation_components(logger: &Logger, config: &AgentConfig) -> Result<
     )
     .map_err(|e| anyhow!("launch_process {} failed: {:?}", API_SERVER_PATH, e))?;
 
+    warn!(logger, "===in init_attestation_components===5");
     Ok(Some(cdh_client))
 }
 

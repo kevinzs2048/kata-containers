@@ -15,11 +15,10 @@ source "${script_dir}/../../scripts/lib.sh"
 build_agent_from_source() {
 	echo "build agent from source"
 
-	/usr/bin/install_libseccomp.sh /opt /opt
-
 	cd src/agent
-	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} PULL_TYPE=${PULL_TYPE} make
-	DESTDIR=${DESTDIR} AGENT_POLICY=${AGENT_POLICY} PULL_TYPE=${PULL_TYPE} make install
+	echo "DESTDIR=${DESTDIR} AGENT_POLICY=yes SECCOMP=no PULL_TYPE=guest-pull"
+	DESTDIR=${DESTDIR} AGENT_POLICY=yes SECCOMP=no PULL_TYPE=guest-pull make
+	DESTDIR=${DESTDIR} AGENT_POLICY=yes SECCOMP=no PULL_TYPE=guest-pull make install
 }
 
 build_agent_from_source "$@"
