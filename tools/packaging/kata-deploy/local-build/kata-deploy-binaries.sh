@@ -674,8 +674,12 @@ install_kernel_confidential() {
 		export MEASURED_ROOTFS=yes
 	fi
 
+	local kernel_yaml_path="assets.kernel.confidential"
+	if [[ "${ARCH}" == "aarch64" ]]; then
+		local kernel_yaml_path="assets.kernel-arm-experimental.confidential"
+	fi
 	install_kernel_helper \
-		"assets.kernel.confidential" \
+		"${kernel_yaml_path}" \
 		"kernel-confidential" \
 		"-x"
 }

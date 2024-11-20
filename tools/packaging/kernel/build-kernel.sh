@@ -334,6 +334,10 @@ get_kernel_frag_path() {
 	results=$(grep "${not_in_string}" <<< "$results")
 	# Do not care about options that are in whitelist
 	results=$(grep -v -f ${default_config_whitelist} <<< "$results")
+	local version_config_whitelist="${default_config_whitelist%.*}-${kernel_version}.conf"
+	if [ -f ${version_config_whitelist} ]; then
+		results=$(grep -v -f ${version_config_whitelist} <<< "$results")
+	fi
 
 	[[ "${skip_config_checks}" == "true" ]] && echo "${config_path}" && return
 
@@ -434,7 +438,7 @@ setup_kernel() {
 		[ -n "$kernel_version" ] || die "failed to get kernel version: Kernel version is emtpy"
 
 		if [[ ${download_kernel} == "true" ]]; then
-			get_kernel "${kernel_version}" "${kernel_path}"
+		  get_kernel "${kernel_version}" "${kernel_path}"
 		fi
 
 		[ -n "$kernel_path" ] || die "failed to find kernel source path"

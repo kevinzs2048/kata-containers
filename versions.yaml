@@ -206,6 +206,10 @@ assets:
     description: "Linux kernel with cpu/mem hotplug support on arm64"
     url: "https://cdn.kernel.org/pub/linux/kernel/v5.x/"
     version: "v5.15.138"
+    confidential:
+      description: "Linux kernel with CCA RME guest support"
+      url: "https://cdn.kernel.org/pub/linux/kernel/v6.x/"
+      version: "v6.14.11"
 
   kernel-dragonball-experimental:
     description: "Linux kernel with Dragonball VMM optimizations like upcall"
