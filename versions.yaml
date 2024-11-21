@@ -118,6 +118,9 @@ assets:
       aarch64:
         name: &default-image-name "ubuntu"
         version: &default-image-version "latest"
+        confidential:
+          name: *default-image-name
+          version: "jammy"
         nvidia-gpu:
           name: *default-image-name
           version: "jammy"
@@ -161,6 +164,9 @@ assets:
       aarch64:
         name: &default-initrd-name "alpine"
         version: &default-initrd-version "3.18"
+        confidential:
+          name: &glibc-initrd-name "ubuntu"
+          version: &glibc-initrd-version "jammy"
         nvidia-gpu:
           name: "ubuntu"
           version: "jammy"
