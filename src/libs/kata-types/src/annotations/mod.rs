@@ -187,6 +187,9 @@ pub const KATA_ANNO_CFG_HYPERVISOR_HOTPLUG_VFIO_ON_ROOT_BUS: &str =
 /// PCIeRootPort is used to indicate the number of PCIe Root Port devices
 pub const KATA_ANNO_CFG_HYPERVISOR_PCIE_ROOT_PORT: &str =
     "io.katacontainers.config.hypervisor.pcie_root_port";
+/// PCIeSwitchPort is used to indicate the number of PCIe Switch Port devices
+pub const KATA_ANNO_CFG_HYPERVISOR_PCIE_SWITCH_PORT: &str =
+    "io.katacontainers.config.hypervisor.pcie_switch_port";
 /// A sandbox annotation to specify if the VM should have a vIOMMU device.
 pub const KATA_ANNO_CFG_HYPERVISOR_IOMMU: &str = "io.katacontainers.config.hypervisor.enable_iommu";
 /// Enable Hypervisor Devices IOMMU_PLATFORM
@@ -664,6 +667,14 @@ impl Annotation {
                     KATA_ANNO_CFG_HYPERVISOR_PCIE_ROOT_PORT => match self.get_value::<u32>(key) {
                         Ok(r) => {
                             hv.device_info.pcie_root_port = r.unwrap_or_default();
+                        }
+                        Err(_e) => {
+                            return Err(u32_err);
+                        }
+                    },
+                    KATA_ANNO_CFG_HYPERVISOR_PCIE_SWITCH_PORT => match self.get_value::<u32>(key) {
+                        Ok(r) => {
+                            hv.device_info.pcie_switch_port = r.unwrap_or_default();
                         }
                         Err(_e) => {
                             return Err(u32_err);
