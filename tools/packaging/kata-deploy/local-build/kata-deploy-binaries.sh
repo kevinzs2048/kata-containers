@@ -592,10 +592,15 @@ install_kernel_helper() {
 		kernel_url="$(get_from_kata_deps .assets.kernel.confidential.url)"
 	fi
 
-	if [[ "${kernel_name}" == "kernel"*"-confidential" ]] && [[ "${ARCH}" == "x86_64" ]]; then
+	if [[ "${kernel_name}" == "kernel"*"-confidential" ]]; then
 		local kernel_modules_tarball_name="kata-static-${kernel_name}-modules.tar.xz"
 		local kernel_modules_tarball_path="${workdir}/${kernel_modules_tarball_name}"
 		extra_tarballs="${kernel_modules_tarball_name}:${kernel_modules_tarball_path}"
+		if [[ "${ARCH}" == "aarch64" ]]; then
+		  		local kernel_headers_tarball_name="kata-static-${kernel_name}-headers.tar.xz"
+      		local kernel_headers_tarball_path="${workdir}/${kernel_headers_tarball_name}"
+      		extra_tarballs+=" ${kernel_headers_tarball_name}:${kernel_headers_tarball_path}"
+		fi
 	fi
 
 	if [[ "${kernel_name}" == "kernel-nvidia-gpu*" ]]; then
