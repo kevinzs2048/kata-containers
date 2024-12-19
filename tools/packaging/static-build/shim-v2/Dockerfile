@@ -44,7 +44,7 @@ RUN ARCH=$(uname -m); \
         *) echo "Unsupported architecture: ${ARCH}" && exit 1 ;; \
   	esac; \
    	rustup target add "${rust_arch}-unknown-linux-${libc}" 
-        
+
 RUN ARCH=$(uname -m); \
     goarch=""; \
     kernelname=$(uname -s | tr '[:upper:]' '[:lower:]'); \

@@ -80,7 +80,8 @@ docker run --rm -i -v "${repo_root_dir}:${repo_root_dir}" \
 	-w "${repo_root_dir}/src/runtime" \
 	--user "$(id -u)":"$(id -g)" \
 	"${container_image}" \
-	bash -c "make clean-generated-files && make PREFIX=${PREFIX} QEMUCMD=qemu-system-${arch} ${EXTRA_OPTS}"
+	bash -c "find ${repo_root_dir}/build/ -maxdepth 1 -name \"kata-static-*-headers.tar.xz\" -exec tar -Jxvf {} \; | xargs dpkg -i || true; \
+		make clean-generated-files && make PREFIX=${PREFIX} QEMUCMD=qemu-system-${arch} ${EXTRA_OPTS}"
 
 docker run --rm -i -v "${repo_root_dir}:${repo_root_dir}" \
 	-w "${repo_root_dir}/src/runtime" \

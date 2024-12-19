@@ -564,6 +564,11 @@ install_cached_kernel_tarball_component() {
 			local modules_dir=$(get_kernel_modules_dir ${kernel_version} ${kernel_kata_config_version} ${build_target})
 			mkdir -p "${modules_dir}" || true
 			tar xvf "${workdir}/kata-static-${kernel_name}-modules.tar.xz" -C "${modules_dir}" || return 1
+			if [[ "${ARCH}" == "aarch64" ]]; then
+				local kernel_headers_dir=$(get_kernel_headers_dir "${kernel_name}")
+				mkdir -p ${kernel_headers_dir} || true
+				tar xvf ${workdir}/${kernel_name}/builddir/kata-static-${kernel_name}-headers.tar.xz -C "${kernel_headers_dir}" || return 1
+      fi
 			;;
 	esac
 
@@ -1267,6 +1272,18 @@ handle_build() {
 				popd
 			fi
 			tar tvf "${modules_final_tarball_path}"
+			if [[ "${ARCH}" == "aarch64" ]]; then
+			  			local kernel_headers_final_tarball_path="${workdir}/kata-static-${build_target}-headers.tar.xz"
+        			if [ ! -f "${kernel_headers_final_tarball_path}" ]; then
+        				local kernel_headers_dir
+        				kernel_headers_dir=$(get_kernel_headers_dir "${build_target}")
+
+        				pushd "${kernel_headers_dir}"
+        				find . -type f -name "*.${KERNEL_HEADERS_PKG_TYPE}" -exec tar cvfJ "${kernel_headers_final_tarball_path}" {} +
+        				popd
+        			fi
+        			tar tvf "${kernel_headers_final_tarball_path}"
+			fi
 			;;
 		shim-v2)
 			if [ "${MEASURED_ROOTFS}" = "yes" ]; then
@@ -1347,6 +1364,11 @@ handle_build() {
 				files_to_push+=(
 					"kata-static-${build_target}-modules.tar.xz"
 				)
+        if [[ "${ARCH}" == "aarch64" ]]; then
+          files_to_push+=(
+					"kata-static-${build_target}-headers.tar.xz"
+				  )
+        fi
 				;;
 			shim-v2)
 				if [ "${MEASURED_ROOTFS}" = "yes" ]; then
