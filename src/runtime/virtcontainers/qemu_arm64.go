@@ -157,13 +157,13 @@ func (q *qemuArm64) getPFlash() ([]string, error) {
 }
 
 func (q *qemuArm64) enableProtection() error {
-	q.protection, _ = availableGuestProtection()
-	if q.protection != noneProtection {
-		var err error
-		q.protection, err = availableGuestProtection()
-		if err != nil {
-			return err
-		}
+	var err error
+	q.protection, err = availableGuestProtection()
+	if err != nil {
+		return err
+	}
+	if q.protection != rmeProtection {
+		return fmt.Errorf("Configured confidential guest but kvm does not supported")
 	}
 	logger := hvLogger.WithFields(logrus.Fields{
 		"subsystem":               "qemuArm64",

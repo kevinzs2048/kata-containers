@@ -12,8 +12,8 @@ const int KVM_CAP_ARM_RME_ID = KVM_CAP_ARM_RME;
 import "C"
 
 import (
-    "syscall"
-    "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"syscall"
 )
 
 // variables rather than consts to allow tests to modify them
@@ -21,7 +21,6 @@ var (
 	kvmDevice = "/dev/kvm"
 )
 
-// Guest protection is not supported on ARM64.
 func availableGuestProtection() (guestProtection, error) {
 	ret, err := checkKVMExtensionsRME()
 	if err != nil {
@@ -35,7 +34,6 @@ func availableGuestProtection() (guestProtection, error) {
 }
 
 // checkKVMExtensionsRME allows to query about the specific kvm extensions
-// nolint: unused, deadcode
 func checkKVMExtensionsRME() (bool, error) {
 	flags := syscall.O_RDWR | syscall.O_CLOEXEC
 	kvm, err := syscall.Open(kvmDevice, flags, 0)
@@ -61,7 +59,7 @@ func checkKVMExtensionsRME() (bool, error) {
 		return false, errno
 	}
 	if ret == 1 {
-                return true, nil
+		return true, nil
 	}
 	return false, nil
 }
