@@ -151,6 +151,10 @@ impl ContainerInner {
             .context("start container")?;
 
         self.set_state(ProcessStatus::Running).await;
+        // for i in 0..15 {
+        //     info!(sl!(), "==========start_container success==={}=====", i);
+        //     tokio::time::sleep(Duration::from_millis(1000)).await;
+        // }
 
         Ok(())
     }

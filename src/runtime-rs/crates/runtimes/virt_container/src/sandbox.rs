@@ -43,6 +43,7 @@ use runtime_spec as spec;
 use std::sync::Arc;
 use tokio::sync::{mpsc::Sender, Mutex, RwLock};
 use tracing::instrument;
+use tokio::time::Duration;
 
 pub(crate) const VIRTCONTAINER: &str = "virt_container";
 
@@ -436,6 +437,10 @@ impl Sandbox for VirtSandbox {
                     .handle_network(network_resource)
                     .await
                     .context("set up device after start vm")?;
+                for i in 0..10 {
+                    info!(sl!(), "==========inside start sandbox after update-network====={}=====", i);
+                    tokio::time::sleep(Duration::from_millis(1000)).await;
+                }
             }
         }
 
@@ -455,7 +460,7 @@ impl Sandbox for VirtSandbox {
             .setup_after_start_vm()
             .await
             .context("setup device after start vm")?;
-
+        info!(sl!(), "==========after self.resource_manager setup_after_start_vm==========");
         // create sandbox in vm
         let agent_config = self.agent.agent_config().await;
         let kernel_modules = KernelModule::set_kernel_modules(agent_config.kernel_modules)?;
@@ -482,7 +487,6 @@ impl Sandbox for VirtSandbox {
             .create_sandbox(req)
             .await
             .context("create sandbox")?;
-
         inner.state = SandboxState::Running;
 
         // get and store guest details
@@ -523,6 +527,7 @@ impl Sandbox for VirtSandbox {
                 }
             }
         });
+        info!(sl!(), "==========start success===after =====");
         self.monitor.start(id, self.agent.clone());
         self.save().await.context("save state")?;
         Ok(())

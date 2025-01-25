@@ -85,10 +85,12 @@ fn open_fifo(path: &str, is_read: bool, is_write: bool) -> Result<File> {
 }
 
 fn open_fifo_read(path: &str) -> Result<File> {
+    info!(sl!(), "==========open_fifo_read======{:?}======", path);
     open_fifo(path, true, false)
 }
 
 fn open_fifo_write(path: &str) -> Result<File> {
+    info!(sl!(), "==========open_fifo_write======{:?}======", path);
     open_fifo(path, false, true)
 }
 
@@ -127,14 +129,15 @@ impl Process {
     }
 
     pub fn pre_fifos_open(&mut self) -> Result<()> {
+        info!(sl!(), "==========pre_fifos_open======0======");
         if let Some(ref stdout) = self.stdout {
             self.stdout_r = Some(open_fifo_read(stdout)?);
         }
-
+        info!(sl!(), "==========pre_fifos_open======1======");
         if let Some(ref stderr) = self.stderr {
             self.stderr_r = Some(open_fifo_read(stderr)?);
         }
-
+        info!(sl!(), "==========pre_fifos_open======2======");
         Ok(())
     }
 
@@ -239,20 +242,21 @@ impl Process {
         container_io: ContainerIo,
     ) -> Result<()> {
         info!(self.logger, "start io and wait");
-
+        info!(sl!(), "==========start_io_and_wait======0======");
         self.pre_fifos_open()?;
+        info!(sl!(), "==========start_io_and_wait======1======");
         // new shim io
         let shim_io = ShimIo::new(&self.stdin, &self.stdout, &self.stderr)
             .await
             .context("new shim io")?;
         self.post_fifos_open()?;
-
+        info!(sl!(), "==========start_io_and_wait======2======");
         // start io copy for stdin
         if let Some(stdin) = shim_io.stdin {
             self.run_io_copy(StdIoType::Stdin, None, stdin, container_io.stdin)
                 .await?;
         }
-
+        info!(sl!(), "==========start_io_and_wait======3======");
         // prepare for wait group for stdout, stderr
         let wg = WaitGroup::new();
         let wgw = wg.worker();
@@ -267,6 +271,7 @@ impl Process {
             )
             .await?;
         }
+        info!(sl!(), "==========start_io_and_wait======4======");
 
         // start io copy for stderr
         if !self.terminal {
@@ -275,10 +280,11 @@ impl Process {
                     .await?;
             }
         }
-
+        info!(sl!(), "==========start_io_and_wait======5======");
         self.run_io_wait(containers, agent, wg)
             .await
             .context("run io thread")?;
+        info!(sl!(), "==========start_io_and_wait======6======");
         Ok(())
     }
 

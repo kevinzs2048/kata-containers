@@ -385,7 +385,6 @@ struct Machine {
 impl Machine {
     fn new(config: &HypervisorConfig) -> Machine {
         #[cfg(any(
-            target_arch = "aarch64",
             target_arch = "powerpc64",
             target_arch = "x86",
             target_arch = "x86_64",
@@ -397,6 +396,9 @@ impl Machine {
             target_arch = "x86",
             target_arch = "x86_64",
         )))]
+        let is_nvdimm_supported = false;
+
+        #[cfg(target_arch = "aarch64")]
         let is_nvdimm_supported = false;
 
         Machine {
@@ -447,6 +449,10 @@ impl ToQemuParams for Machine {
         if let Some(mem_backend) = &self.memory_backend {
             params.push(format!("memory-backend={}", mem_backend));
         }
+        // #[cfg(target_arch = "aarch64")]
+        // params.push(format!("usb=off"));
+        // #[cfg(target_arch = "aarch64")]
+        // params.push(format!("gic-version=3"));
         Ok(vec!["-machine".to_owned(), params.join(",")])
     }
 }
@@ -749,6 +755,7 @@ impl ToQemuParams for DeviceNvdimm {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct BlockBackend {
     driver: String,
     id: String,
@@ -759,6 +766,7 @@ struct BlockBackend {
     read_only: bool,
 }
 
+#[allow(dead_code)]
 impl BlockBackend {
     fn new(id: &str, path: &str) -> BlockBackend {
         BlockBackend {
@@ -804,6 +812,7 @@ impl BlockBackend {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 impl ToQemuParams for BlockBackend {
     async fn qemu_params(&self) -> Result<Vec<String>> {
         let mut params = Vec::new();
@@ -829,6 +838,45 @@ impl ToQemuParams for BlockBackend {
         Ok(vec!["-blockdev".to_owned(), params.join(",")])
     }
 }
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct BlockDrive {
+    id: String,
+    file: String,
+    aio: String,
+    format: String,
+    read_only: bool,
+}
+
+#[allow(dead_code)]
+impl BlockDrive {
+    fn new(id: &str, path: &str) -> BlockDrive {
+        BlockDrive {
+            id: id.to_owned(),
+            file: path.to_owned(),
+            aio: "threads".to_owned(),
+            format: "raw".to_owned(),
+            read_only: true,
+        }
+    }
+}
+
+#[async_trait]
+#[allow(dead_code)]
+impl ToQemuParams for BlockDrive {
+    async fn qemu_params(&self) -> Result<Vec<String>> {
+        let mut params = Vec::new();
+        params.push(format!("id=image-{}", self.id));
+        params.push(format!("file={}", self.file));
+        params.push(format!("aio={}", self.aio));
+        params.push(format!("format={}", self.format));
+        params.push(format!("if=none"));
+        params.push(format!("readonly={}", "on".to_owned()));
+        Ok(vec!["-drive".to_owned(), params.join(",")])
+    }
+}
+
 
 #[derive(Debug)]
 struct DeviceVirtioBlk {
@@ -877,6 +925,7 @@ impl ToQemuParams for DeviceVirtioBlk {
         } else {
             params.push("share-rw=off".to_owned());
         }
+        params.push("disable-modern=false".to_owned());
         params.push(format!("serial=image-{}", self.id));
 
         Ok(vec!["-device".to_owned(), params.join(",")])
@@ -1546,6 +1595,8 @@ impl ToQemuParams for DeviceVirtioScsi {
         params.push(format!("id={}", self.id));
         if self.disable_modern {
             params.push("disable-modern=true".to_owned());
+        } else {
+            params.push("disable-modern=false".to_owned());
         }
         if !self.iothread.is_empty() {
             params.push(format!("iothread={}", self.iothread));
@@ -1623,6 +1674,7 @@ impl ToQemuParams for PCIeRootPortDevice {
 
         // -device pcie-root-port,id=rp0
         device_params.push(format!("{},id={}", "pcie-root-port", self.id));
+        info!(sl!(), "==========PCIeRootPortDevice: {}==========", self.id);
 
         let bus = if self.bus.is_empty() {
             DEFAULT_PCIE_ROOT_BUS
@@ -1668,6 +1720,7 @@ impl ToQemuParams for PCIeRootPortDevice {
 
         qemu_params.push("-device".to_string());
         qemu_params.push(device_params.join(","));
+        info!(sl!(), "==========PCIeRootPortDevice: {:?}==========", device_params);
 
         Ok(qemu_params)
     }
@@ -1985,7 +2038,7 @@ impl<'a> QemuCmdLine<'a> {
 
     pub fn add_block_device(&mut self, device_id: &str, path: &str) -> Result<()> {
         self.devices
-            .push(Box::new(BlockBackend::new(device_id, path)));
+            .push(Box::new(BlockDrive::new(device_id, path)));
         self.devices.push(Box::new(DeviceVirtioBlk::new(
             device_id,
             bus_type(self.config),

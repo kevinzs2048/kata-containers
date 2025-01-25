@@ -28,6 +28,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::{Child, ChildStderr, Command},
 };
+use tokio::time::Duration;
 
 const VSOCK_SCHEME: &str = "vsock";
 
@@ -96,6 +97,7 @@ impl QemuInner {
                     cmdline.add_vsock(fd, vsock_dev.config.guest_cid)?;
                 }
                 DeviceType::Block(block_dev) => {
+                    info!(sl!(), "===============DeviceType::Block==============");
                     if block_dev.config.path_on_host == self.config.boot_info.initrd {
                         // If this block device represents initrd we ignore it here, it
                         // will be handled elsewhere by adding `-initrd` to the qemu
@@ -103,6 +105,10 @@ impl QemuInner {
                         continue;
                     }
                     match block_dev.config.driver_option.as_str() {
+                        "blk" => cmdline.add_block_device(
+                            block_dev.device_id.as_str(),
+                            &block_dev.config.path_on_host,
+                        )?,
                         "nvdimm" => cmdline.add_nvdimm(
                             &block_dev.config.path_on_host,
                             block_dev.config.is_readonly,
@@ -117,6 +123,7 @@ impl QemuInner {
                     }
                 }
                 DeviceType::Network(network) => {
+                    info!(sl!(), "===============DeviceType::Network==============");
                     // we need ensure add_network_device happens in netns.
                     let _netns_guard = NetnsGuard::new(&netns).context("new netns guard")?;
 
@@ -126,6 +133,7 @@ impl QemuInner {
                     )?;
                 }
                 DeviceType::PortDevice(port_device) => {
+                    info!(sl!(), "===============DeviceType::PortDevice==============");
                     let total_ports = port_device.config.total_ports;
                     let port_type = port_device.config.port_type;
                     let mem_reserve = port_device.config.memsz_reserve;
@@ -133,6 +141,7 @@ impl QemuInner {
 
                     match port_type {
                         PCIePort::RootPort => {
+                            info!(sl!(), "==========cmdline.add_pcie_root_port==========");
                             cmdline.add_pcie_root_port(total_ports, mem_reserve, pref64_reserve)?
                         }
                         PCIePort::SwitchPort => cmdline.add_pcie_switch_port(
@@ -175,6 +184,11 @@ impl QemuInner {
         self.qemu_process = Mutex::new(Some(qemu_process));
 
         info!(sl!(), "qemu process started");
+
+        for i in 0..5 {
+            info!(sl!(), "==========check the status====={}=====", i);
+            tokio::time::sleep(Duration::from_millis(1000)).await;
+        }
 
         let exit_notify: mpsc::Sender<()> = self
             .exit_notify
@@ -592,7 +606,8 @@ impl QemuInner {
                     &network_device.config.host_dev_name,
                     network_device.config.guest_mac.clone().unwrap(),
                 )?;
-                qmp.hotplug_network_device(&netdev, &virtio_net_device)?
+                let machine_type = &self.config.machine_info.machine_type;
+                qmp.hotplug_network_device(&netdev, &virtio_net_device,machine_type)?
             }
             _ => info!(sl!(), "hotplugging of {:#?} is unsupported", device),
         }

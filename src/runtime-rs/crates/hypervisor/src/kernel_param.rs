@@ -94,7 +94,7 @@ impl KernelParams {
                 params.push(Param::new("root", VM_ROOTFS_ROOT_BLK));
                 match rootfs_type {
                     VM_ROOTFS_FILESYSTEM_EXT4 | VM_ROOTFS_FILESYSTEM_XFS => {
-                        params.push(Param::new("rootflags", "data=ordered,errors=remount-ro ro"));
+                        params.push(Param::new("rootflags", "data=ordered,errors=remount-ro ro debug console=ttyAMA0 initcall_debug"));
                     }
                     VM_ROOTFS_FILESYSTEM_EROFS => {
                         params.push(Param::new("rootflags", "ro"));

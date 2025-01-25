@@ -73,6 +73,7 @@ struct Driver {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct DriverInfo {
     pub driver: String,
     pub bus_info: String,

@@ -233,11 +233,13 @@ impl ResourceManagerInner {
     }
 
     pub async fn setup_after_start_vm(&mut self) -> Result<()> {
+        info!(sl!(), "==================setup_after_start_vm=====================");
         if let Some(share_fs) = self.share_fs.as_ref() {
             share_fs
                 .setup_device_after_start_vm(self.hypervisor.as_ref(), &self.device_manager)
                 .await
                 .context("setup share fs device after start vm")?;
+            info!(sl!(), "==================after share fs=====================");
         }
 
         if let Some(network) = self.network.as_ref() {
@@ -245,10 +247,12 @@ impl ResourceManagerInner {
             self.handle_interfaces(network)
                 .await
                 .context("handle interfaces")?;
+            info!(sl!(), "==================after handle interfaces=====================");
             self.handle_neighbours(network)
                 .await
                 .context("handle neighbors")?;
             self.handle_routes(network).await.context("handle routes")?;
+            info!(sl!(), "==================after handle routes=====================");
         }
 
         Ok(())

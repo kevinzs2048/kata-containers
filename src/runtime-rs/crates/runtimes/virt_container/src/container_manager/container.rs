@@ -262,6 +262,7 @@ impl Container {
         process: &ContainerProcess,
     ) -> Result<()> {
         let mut inner = self.inner.write().await;
+        info!(sl!(), "==========container manager============");
         match process.process_type {
             ProcessType::Container => {
                 if let Err(err) = inner.start_container(&process.container_id).await {
@@ -269,18 +270,21 @@ impl Container {
                     let _ = inner.stop_process(process, true, &device_manager).await;
                     return Err(err);
                 }
-
+                info!(sl!(), "==========container manager======1======");
                 if self.passfd_listener_addr.is_some() {
+                    info!(sl!(), "==========container manager=====2=====");
                     inner
                         .init_process
                         .passfd_io_wait(containers, self.agent.clone())
                         .await?;
                 } else {
+                    info!(sl!(), "==========container manager======3======");
                     let container_io = inner.new_container_io(process).await?;
                     inner
                         .init_process
                         .start_io_and_wait(containers, self.agent.clone(), container_io)
                         .await?;
+                    info!(sl!(), "==========container manager======4======");
                 }
             }
             ProcessType::Exec => {

@@ -104,6 +104,7 @@ pub enum GuestComponentsProcs {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct AgentConfig {
     pub debug_console: bool,
     pub dev_mode: bool,

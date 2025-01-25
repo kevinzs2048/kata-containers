@@ -18,6 +18,7 @@ use containerd_shim_protos::shim::events;
 use containerd_shim_protos::shim_async::Events;
 use ttrpc::MessageHeader;
 
+#[allow(dead_code)]
 const REMOTE_FORWARDER: &str = "remote";
 const LOG_FORWARDER: &str = "log";
 
@@ -27,6 +28,7 @@ const TTRPC_ADDRESS_ENV: &str = "TTRPC_ADDRESS";
 
 /// Forwarder forwards events to upper runtime.
 #[async_trait]
+#[allow(dead_code)]
 pub(crate) trait Forwarder {
     /// Forward an event to publisher
     async fn forward(&self, event: Arc<dyn Event + Send + Sync>) -> Result<()>;
