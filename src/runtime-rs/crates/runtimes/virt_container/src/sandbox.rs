@@ -43,7 +43,7 @@ use runtime_spec as spec;
 use std::sync::Arc;
 use tokio::sync::{mpsc::Sender, Mutex, RwLock};
 use tracing::instrument;
-use tokio::time::Duration;
+//use tokio::time::Duration;
 
 pub(crate) const VIRTCONTAINER: &str = "virt_container";
 
@@ -437,10 +437,10 @@ impl Sandbox for VirtSandbox {
                     .handle_network(network_resource)
                     .await
                     .context("set up device after start vm")?;
-                for i in 0..10 {
-                    info!(sl!(), "==========inside start sandbox after update-network====={}=====", i);
-                    tokio::time::sleep(Duration::from_millis(1000)).await;
-                }
+                // for i in 0..5 {
+                //     info!(sl!(), "==========inside start sandbox after update-network====={}=====", i);
+                //     tokio::time::sleep(Duration::from_millis(1000)).await;
+                // }
             }
         }
 

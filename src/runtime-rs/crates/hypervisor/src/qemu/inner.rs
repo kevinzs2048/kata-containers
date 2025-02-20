@@ -28,7 +28,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::{Child, ChildStderr, Command},
 };
-use tokio::time::Duration;
+//use tokio::time::Duration;
 
 const VSOCK_SCHEME: &str = "vsock";
 
@@ -185,10 +185,10 @@ impl QemuInner {
 
         info!(sl!(), "qemu process started");
 
-        for i in 0..5 {
-            info!(sl!(), "==========check the status====={}=====", i);
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-        }
+        // for i in 0..5 {
+        //     info!(sl!(), "==========check the status====={}=====", i);
+        //     tokio::time::sleep(Duration::from_millis(1000)).await;
+        // }
 
         let exit_notify: mpsc::Sender<()> = self
             .exit_notify
