@@ -187,6 +187,11 @@ get_ovmf_image_name() {
 	echo "${BUILDER_REGISTRY}:ovmf-$(get_last_modification ${ovmf_script_dir})-$(uname -m)"
 }
 
+get_aavmf_image_name() {
+	ovmf_script_dir="${repo_root_dir}/tools/packaging/static-build/aavmf"
+	echo "${BUILDER_REGISTRY}:aavmf-$(get_last_modification ${aavmf_script_dir})-$(uname -m)"
+}
+
 get_busybox_image_name() {
 	busybox_script_dir="${repo_root_dir}/tools/packaging/static-build/busybox"
 	echo "${BUILDER_REGISTRY}:busybox-$(get_last_modification "${busybox_script_dir}")-$(uname -m)"

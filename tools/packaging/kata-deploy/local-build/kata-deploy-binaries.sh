@@ -22,6 +22,7 @@ readonly static_build_dir="${repo_root_dir}/tools/packaging/static-build"
 readonly version_file="${repo_root_dir}/VERSION"
 readonly versions_yaml="${repo_root_dir}/versions.yaml"
 
+readonly aavmf_builder="${static_build_dir}/aavmf/build.sh"
 readonly busybox_builder="${static_build_dir}/busybox/build.sh"
 readonly agent_builder="${static_build_dir}/agent/build.sh"
 readonly coco_guest_components_builder="${static_build_dir}/coco-guest-components/build.sh"
@@ -93,6 +94,7 @@ options:
 -h|--help      	      : Show this help
 -s             	      : Silent mode (produce output in case of failure only)
 --build=<asset>       :
+	aavmf
 	all
 	agent
 	agent-ctl
@@ -902,6 +904,27 @@ install_ovmf_sev() {
 	install_ovmf "sev" "edk2-sev.tar.gz"
 }
 
+install_aavmf() {
+	aavmf_type="${1:-aarch64}"
+	tarball_name="${2:-edk2-aarch64.tar.gz}"
+
+	local component_name="aavmf"
+
+	latest_artefact="$(get_from_kata_deps ".externals.aavmf.${aavmf_type}.version")"
+	latest_builder_image="$(get_aavmf_image_name)"
+
+	install_cached_tarball_component \
+		"${component_name}" \
+		"${latest_artefact}" \
+		"${latest_builder_image}" \
+		"${final_tarball_name}" \
+		"${final_tarball_path}" \
+		&& return 0
+
+	DESTDIR="${destdir}" PREFIX="${prefix}" aavmf_build="${aavmf_type}" "${aavmf_builder}"
+	tar xvf "${builddir}/${tarball_name}" -C "${destdir}"
+}
+
 install_busybox() {
 	latest_artefact="$(get_from_kata_deps ".externals.busybox.version")"
 	latest_builder_image="$(get_busybox_image_name)"
@@ -1119,6 +1142,7 @@ handle_build() {
 
 	case "${build_target}" in
 	all)
+		install_aavmf
 		install_agent_ctl
 		install_clh
 		install_firecracker
@@ -1187,6 +1211,8 @@ handle_build() {
 	ovmf) install_ovmf ;;
 
 	ovmf-sev) install_ovmf_sev ;;
+
+	aavmf) install_aavmf ;;
 
 	pause-image) install_pause_image ;;
 

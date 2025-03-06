@@ -144,6 +144,9 @@ ovmf-sev-tarball:
 ovmf-tarball:
 	${MAKE} $@-build
 
+aavmf-tarball:
+	${MAKE} $@-build
+
 qemu-snp-experimental-tarball:
 	${MAKE} $@-build
 

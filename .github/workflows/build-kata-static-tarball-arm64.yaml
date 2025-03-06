@@ -32,6 +32,7 @@ jobs:
     strategy:
       matrix:
         asset:
+          - aavmf
           - agent
           - busybox
           - cloud-hypervisor
