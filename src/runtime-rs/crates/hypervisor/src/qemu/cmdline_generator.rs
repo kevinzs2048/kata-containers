@@ -2501,7 +2501,7 @@ impl<'a> QemuCmdLine<'a> {
         Ok(())
     }
 
-    pub fn add_bios(&mut self, path: &str) ->  Result<()> {
+    pub fn add_bios(&mut self, path: &str) -> Result<()> {
         self.devices.push(Box::new(Bios::new(path.to_string())));
         Ok(())
     }

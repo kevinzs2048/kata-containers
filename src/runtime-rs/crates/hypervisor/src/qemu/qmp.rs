@@ -377,7 +377,7 @@ impl Qmp {
         &mut self,
         netdev: &Netdev,
         virtio_net_device: &DeviceVirtioNet,
-        machine_type: &String
+        machine_type: &String,
     ) -> Result<()> {
         debug!(
             sl!(),
@@ -459,10 +459,10 @@ impl Qmp {
                 arguments: netdev_frontend_args,
             })?;
             debug!(
-                 sl!(),
-                 "hotplug_network_device(): PCI after {}: {:#?}",
-                 virtio_net_device.get_netdev_id(),
-                 self.qmp.execute(&qapi_qmp::query_pci {})?
+                sl!(),
+                "hotplug_network_device(): PCI after {}: {:#?}",
+                virtio_net_device.get_netdev_id(),
+                self.qmp.execute(&qapi_qmp::query_pci {})?
              );
             return Ok(());
         }

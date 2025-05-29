@@ -25,11 +25,11 @@ use std::convert::TryInto;
 use std::path::Path;
 use std::process::Stdio;
 use tokio::sync::{mpsc, Mutex};
+use tokio::time::{Duration,Instant};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::{Child, ChildStderr, Command},
 };
-use tokio::time::{Duration,Instant};
 
 const VSOCK_SCHEME: &str = "vsock";
 
@@ -219,8 +219,11 @@ impl QemuInner {
                     break;
                 }
                 Err(e) => {
-                    if time_start.elapsed() >= Duration::from_secs(timeout as u64)  {
-                        error!(sl!(), "Failed to couldn't initialise QMP(timeout {:?}s): {:?}", timeout, e);
+                    if time_start.elapsed() >= Duration::from_secs(timeout as u64) {
+                        error!(
+                            sl!(),
+                            "Failed to couldn't initialise QMP(timeout {:?}s): {:?}", timeout, e
+                        );
                         return Err(e);
                     }
                 }
@@ -631,7 +634,7 @@ impl QemuInner {
                     &mut None,
                 )?;
                 let machine_type = &self.config.machine_info.machine_type;
-                qmp.hotplug_network_device(&netdev, &virtio_net_device,machine_type)?
+                qmp.hotplug_network_device(&netdev, &virtio_net_device, machine_type)?
             }
             _ => info!(sl!(), "hotplugging of {:#?} is unsupported", device),
         }
