@@ -21,6 +21,8 @@ import (
 type qemuArm64 struct {
 	// inherit from qemuArchBase, overwrite methods if needed
 	qemuArchBase
+
+	measurementAlgo string
 }
 
 const defaultQemuPath = "/usr/bin/qemu-system-aarch64"
@@ -30,6 +32,14 @@ const defaultQemuMachineType = QemuVirt
 const qmpMigrationWaitTimeout = 10 * time.Second
 
 const defaultQemuMachineOptions = "usb=off,accel=kvm,gic-version=host"
+
+const (
+	// sha512 measurement Algorithm for Arm CCA RME
+	measurementAlgoSha512 ObjectType = "sha512"
+
+	// sha256 measurement Algorithm for Arm CCA RME
+	measurementAlgoSha256 ObjectType = "sha256"
+)
 
 var kernelParams = []Param{
 	{"iommu.passthrough", "0"},
@@ -73,6 +83,10 @@ func newQemuArch(config HypervisorConfig) (qemuArch, error) {
 		if !q.qemuArchBase.disableNvdimm {
 			hvLogger.WithField("subsystem", "qemuArm64").Warn("Nvdimm is not supported with confidential guest, disabling it.")
 			q.qemuArchBase.disableNvdimm = true
+		}
+		q.measurementAlgo = config.MeasurementAlgo
+		if q.measurementAlgo != measurementAlgoSha512 || q.measurementAlgo != measurementAlgoSha256 {
+			return nil, fmt.Errorf("invalid measurement algo: %v, should be sha512 or sha256", q.measurementAlgo)
 		}
 	}
 
@@ -174,7 +188,7 @@ func (q *qemuArm64) enableProtection() error {
 	if q.qemuMachine.Options != "" {
 		q.qemuMachine.Options += ","
 	}
-	q.qemuMachine.Options += "confidential-guest-support=rme0,acpi=off"
+	q.qemuMachine.Options += "confidential-guest-support=rme0"
 	logger.Info("Enabling Arm CCA Realm protection")
 
 	return nil
@@ -189,7 +203,8 @@ func (q *qemuArm64) appendProtectionDevice(devices []govmmQemu.Device, firmware,
 				ID:              "rme0",
 				Debug:           false,
 				File:            firmware,
-				MeasurementAlgo: "sha512",
+				MeasurementAlgo: q.measurementAlgo,
+				InitdataDigest:  initdataDigest,
 			}), "", nil
 	case noneProtection:
 		return devices, firmware, nil
@@ -201,4 +216,3 @@ func (q *qemuArm64) appendProtectionDevice(devices []govmmQemu.Device, firmware,
 func (q *qemuArm64) memoryTopology(memoryMb, hostMemoryMb uint64, slots uint8) govmmQemu.Memory {
 	return genericMemoryTopology(memoryMb, hostMemoryMb, slots, q.memoryOffset)
 }
-

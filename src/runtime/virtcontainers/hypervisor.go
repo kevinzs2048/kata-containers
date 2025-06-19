@@ -702,6 +702,10 @@ type HypervisorConfig struct {
 	DefaultGPUs uint32
 	// DefaultGPUModel specifies GPU model like tesla, h100, readeon etc.
 	DefaultGPUModel string
+
+	// MeasurementAlgo is the algorithm for measurement
+	// This is only relevant for Arm CCA rme-guest objects
+	MeasurementAlgo string
 }
 
 // vcpu mapping from vcpu number to thread number

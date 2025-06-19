@@ -446,6 +446,12 @@ func (object Object) QemuParams(config *Config) []string {
 		objectParams = append(objectParams, string(object.Type))
 		objectParams = append(objectParams, fmt.Sprintf("id=%s", object.ID))
 		objectParams = append(objectParams, fmt.Sprintf("measurement-algorithm=%s", object.MeasurementAlgo))
+		if len(object.InitdataDigest) > 0 {
+			// PersonalizationValue in Arm-CCA should be exactly 64 bytes
+			personalizationValueSlice := adjustProperLength(object.InitdataDigest, 64)
+			personalizationValue := base64.StdEncoding.EncodeToString(personalizationValueSlice)
+			objectParams = append(objectParams, fmt.Sprintf("personalization-value=%s", personalizationValue))
+		}
 	}
 
 	if len(deviceParams) > 0 {
