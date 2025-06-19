@@ -271,8 +271,8 @@ const (
 	// PEFGuest represent ppc64le PEF(Protected Execution Facility) object.
 	PEFGuest ObjectType = "pef-guest"
 
-	// RMEGuest represent Arm64 RME(Realm Management Extension) object.
-	RMEGuest ObjectType = "rme-guest"
+	// CCAGuest represent Arm64 CCA RME(Realm Management Extension) object.
+	CCAGuest ObjectType = "rme-guest"
 )
 
 // Object is a qemu object representation.
@@ -337,7 +337,7 @@ type Object struct {
 	InitdataDigest []byte
 
 	// MeasurementAlgo is the algorithm for measurement
-	// This is only relevant for rme-guest objects
+	// This is only relevant for cca-guest objects
 	MeasurementAlgo string
 }
 
@@ -358,7 +358,7 @@ func (object Object) Valid() bool {
 		return object.ID != ""
 	case PEFGuest:
 		return object.ID != "" && object.File != ""
-	case RMEGuest:
+	case CCAGuest:
 		return object.ID != "" && object.MeasurementAlgo != ""
 
 	default:
@@ -442,7 +442,7 @@ func (object Object) QemuParams(config *Config) []string {
 		deviceParams = append(deviceParams, string(object.Driver))
 		deviceParams = append(deviceParams, fmt.Sprintf("id=%s", object.DeviceID))
 		deviceParams = append(deviceParams, fmt.Sprintf("host-path=%s", object.File))
-	case RMEGuest:
+	case CCAGuest:
 		objectParams = append(objectParams, string(object.Type))
 		objectParams = append(objectParams, fmt.Sprintf("id=%s", object.ID))
 		objectParams = append(objectParams, fmt.Sprintf("measurement-algorithm=%s", object.MeasurementAlgo))

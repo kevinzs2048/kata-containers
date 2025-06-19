@@ -5,7 +5,7 @@
 
 # XXX: WARNING: this file is auto-generated.
 # XXX:
-# XXX: Source file: "@CONFIG_QEMU_RME_IN@"
+# XXX: Source file: "@CONFIG_QEMU_CCA_IN@"
 # XXX: Project:
 # XXX:   Name: @PROJECT_NAME@
 # XXX:   Type: @PROJECT_TYPE@
@@ -15,6 +15,12 @@ path = "@QEMUPATH@"
 kernel = "@KERNELCONFIDENTIALPATH@"
 initrd = "@INITRDCONFIDENTIALPATH@"
 machine_type = "@MACHINETYPE@"
+
+# rootfs filesystem type:
+#   - ext4 (default)
+#   - xfs
+#   - erofs
+rootfs_type=@DEFROOTFSTYPE@
 
 # Enable confidential guest support.
 # Toggling that setting may trigger different hardware features, ranging
@@ -62,7 +68,7 @@ kernel_params = "@KERNELPARAMS@"
 
 # Path to the firmware.
 # If you want that qemu uses the default firmware leave this option empty
-firmware = "@FIRMWARERMEPATH@"
+firmware = "@FIRMWARECCAPATH@"
 
 # Path to the firmware volume.
 # firmware TDVF or OVMF can be split into FIRMWARE_VARS.fd (UEFI variables
@@ -165,7 +171,7 @@ disable_block_device_use = @DEFDISABLEBLOCK@
 #   - virtio-9p
 #   - virtio-fs-nydus
 #   - none
-shared_fs = "@DEFSHAREDFS_QEMU_RME_VIRTIOFS@"
+shared_fs = "@DEFSHAREDFS_QEMU_CCA_VIRTIOFS@"
 
 # Path to vhost-user-fs daemon.
 virtio_fs_daemon = "@DEFVIRTIOFSDAEMON@"
@@ -408,9 +414,9 @@ disable_guest_selinux=@DEFDISABLEGUESTSELINUX@
 
 # In QEMU, the Realm Management Extension (RME) measurement algorithm is used for attestation, and it supports
 SHA256 and SHA512 as options. The default is SHA512. This algorithm is crucial for verifying the integrity of a
-Realm, a secure execution environment within the larger system. QEMU supports SHA256 and SHA512 for RME
+Realm, a secure execution environment within the larger system. QEMU supports SHA256 and SHA512 for CCA RME
 measurements. SHA512 is generally preferred on 64-bit architectures due to potential hardware acceleration.
-measurement_algo = @DEFRMEMEASUREMENTALGO@
+measurement_algo = @DEFCCAMEASUREMENTALGO@
 
 [factory]
 # VM templating support. Once enabled, new VMs are created from template

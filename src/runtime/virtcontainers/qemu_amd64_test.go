@@ -275,9 +275,9 @@ func TestQemuAmd64AppendProtectionDevice(t *testing.T) {
 	assert.Error(err)
 	assert.Empty(bios)
 
-	// RME protection
-	amd64.(*qemuAmd64).protection = rmeProtection
-	devices, bios, err = amd64.appendProtectionDevice(devices, firmware, "")
+	// CCA protection
+	amd64.(*qemuAmd64).protection = ccaProtection
+	devices, bios, err = amd64.appendProtectionDevice(devices, firmware, "", []byte(""))
 	assert.Error(err)
 	assert.Empty(bios)
 

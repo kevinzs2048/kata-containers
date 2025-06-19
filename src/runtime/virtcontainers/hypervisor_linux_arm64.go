@@ -27,7 +27,7 @@ func availableGuestProtection() (guestProtection, error) {
 		return noneProtection, err
 	}
 	if ret == true {
-		return rmeProtection, nil
+		return ccaProtection, nil
 	} else {
 		return noneProtection, nil
 	}

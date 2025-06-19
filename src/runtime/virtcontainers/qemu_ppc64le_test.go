@@ -90,8 +90,8 @@ func TestQemuPPC64leAppendProtectionDevice(t *testing.T) {
 	assert.Error(err)
 	assert.Empty(bios)
 
-	// RME protection
-	ppc64le.(*qemuPPC64le).protection = rmeProtection
+	// CCA protection
+	ppc64le.(*qemuPPC64le).protection = ccaProtection
 	devices, bios, err = ppc64le.appendProtectionDevice(devices, firmware, "")
 	assert.Error(err)
 	assert.Empty(bios)

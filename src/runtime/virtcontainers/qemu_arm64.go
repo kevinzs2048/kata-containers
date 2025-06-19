@@ -35,10 +35,10 @@ const defaultQemuMachineOptions = "usb=off,accel=kvm,gic-version=host"
 
 const (
 	// sha512 measurement Algorithm for Arm CCA RME
-	measurementAlgoSha512 ObjectType = "sha512"
+	measurementAlgoSha512 string = "sha512"
 
 	// sha256 measurement Algorithm for Arm CCA RME
-	measurementAlgoSha256 ObjectType = "sha256"
+	measurementAlgoSha256 string = "sha256"
 )
 
 var kernelParams = []Param{
@@ -61,7 +61,7 @@ func newQemuArch(config HypervisorConfig) (qemuArch, error) {
 	}
 
 	q := &qemuArm64{
-		qemuArchBase{
+		qemuArchBase: qemuArchBase{
 			qemuMachine:          supportedQemuMachine,
 			qemuExePath:          defaultQemuPath,
 			memoryOffset:         config.MemOffset,
@@ -73,6 +73,7 @@ func newQemuArch(config HypervisorConfig) (qemuArch, error) {
 			protection:           noneProtection,
 			legacySerial:         config.LegacySerial,
 		},
+		measurementAlgo: config.MeasurementAlgo,
 	}
 
 	if config.ConfidentialGuest {
@@ -84,8 +85,8 @@ func newQemuArch(config HypervisorConfig) (qemuArch, error) {
 			hvLogger.WithField("subsystem", "qemuArm64").Warn("Nvdimm is not supported with confidential guest, disabling it.")
 			q.qemuArchBase.disableNvdimm = true
 		}
-		q.measurementAlgo = config.MeasurementAlgo
-		if q.measurementAlgo != measurementAlgoSha512 || q.measurementAlgo != measurementAlgoSha256 {
+
+		if q.measurementAlgo != measurementAlgoSha512 && q.measurementAlgo != measurementAlgoSha256 {
 			return nil, fmt.Errorf("invalid measurement algo: %v, should be sha512 or sha256", q.measurementAlgo)
 		}
 	}
@@ -176,7 +177,7 @@ func (q *qemuArm64) enableProtection() error {
 	if err != nil {
 		return err
 	}
-	if q.protection != rmeProtection {
+	if q.protection != ccaProtection {
 		return fmt.Errorf("Configured confidential guest but kvm does not supported")
 	}
 	logger := hvLogger.WithFields(logrus.Fields{
@@ -196,10 +197,10 @@ func (q *qemuArm64) enableProtection() error {
 
 func (q *qemuArm64) appendProtectionDevice(devices []govmmQemu.Device, firmware, firmwareVolume string, initdataDigest []byte) ([]govmmQemu.Device, string, error) {
 	switch q.protection {
-	case rmeProtection:
+	case ccaProtection:
 		return append(devices,
 			govmmQemu.Object{
-				Type:            govmmQemu.RMEGuest,
+				Type:            govmmQemu.CCAGuest,
 				ID:              "rme0",
 				Debug:           false,
 				File:            firmware,

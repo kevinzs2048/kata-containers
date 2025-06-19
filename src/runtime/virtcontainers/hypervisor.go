@@ -704,7 +704,7 @@ type HypervisorConfig struct {
 	DefaultGPUModel string
 
 	// MeasurementAlgo is the algorithm for measurement
-	// This is only relevant for Arm CCA rme-guest objects
+	// This is only relevant for Arm CCA cca-guest objects
 	MeasurementAlgo string
 }
 
@@ -1087,7 +1087,7 @@ const (
 
 	// Arm Realm Management Extension (Arm Confidential Computing Architecture)
 	// https://www.arm.com/architecture/security-features/arm-confidential-compute-architecture
-	rmeProtection
+	ccaProtection
 )
 
 var guestProtectionStr = [...]string{
@@ -1097,7 +1097,7 @@ var guestProtectionStr = [...]string{
 	sevProtection:  "sev",
 	snpProtection:  "snp",
 	tdxProtection:  "tdx",
-	rmeProtection:  "rme",
+	ccaProtection:  "cca",
 }
 
 func (gp guestProtection) String() string {
