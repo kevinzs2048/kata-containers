@@ -181,13 +181,13 @@ stratovirt-tarball:
 rootfs-image-tarball: agent-tarball
 	${MAKE} $@-build
 
-rootfs-image-confidential-tarball: agent-tarball pause-image-tarball coco-guest-components-tarball kernel-confidential-tarball
+rootfs-image-confidential-tarball: agent-tarball pause-image-tarball coco-guest-components-tarball
 	${MAKE} $@-build
 
 rootfs-image-mariner-tarball: agent-tarball
 	${MAKE} $@-build
 
-rootfs-initrd-confidential-tarball: agent-tarball pause-image-tarball coco-guest-components-tarball kernel-confidential-tarball
+rootfs-initrd-confidential-tarball: agent-tarball pause-image-tarball coco-guest-components-tarball
 	${MAKE} $@-build
 
 rootfs-initrd-tarball: agent-tarball
@@ -214,6 +214,15 @@ shim-v2-tarball:
 ifeq ($(ARCH), aarch64)
 shim-v2-tarball-build: kernel-cca-confidential-tarball-build
 	$(call BUILD,shim-v2)
+rootfs-image-confidential-tarball-build: kernel-cca-confidential-tarball
+	$(call BUILD,rootfs-image-confidential)
+rootfs-initrd-confidential-tarball-build: kernel-cca-confidential-tarball
+	$(call BUILD,rootfs-initrd-confidential)
+else
+rootfs-image-confidential-tarball-build: kernel-confidential-tarball
+	$(call BUILD,rootfs-image-confidential)
+rootfs-initrd-confidential-tarball-build: kernel-confidential-tarball
+	$(call BUILD,rootfs-initrd-confidential)
 endif
 
 trace-forwarder-tarball: copy-scripts-for-the-tools-build
