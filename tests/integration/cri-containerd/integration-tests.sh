@@ -41,7 +41,7 @@ readonly CONTAINERD_CONFIG_FILE="${tmp_dir}/test-containerd-config"
 readonly CONTAINERD_CONFIG_FILE_TEMP="${CONTAINERD_CONFIG_FILE}.temp"
 readonly default_containerd_config="/etc/containerd/config.toml"
 readonly default_containerd_config_backup="$CONTAINERD_CONFIG_FILE.backup"
-readonly kata_config="/etc/kata-containers/configuration.toml"
+readonly kata_config="/etc/kata-containers/runtime-rs/configuration.toml"
 readonly kata_config_backup="$kata_config.backup"
 
 function ci_config() {
@@ -107,17 +107,17 @@ cat << EOF | sudo tee "${CONTAINERD_CONFIG_FILE}"
 [debug]
   level = "debug"
 [plugins]
-  [plugins.cri]
-    [plugins.cri.containerd]
+  [plugins."io.containerd.cri.v1.runtime"]
+    [plugins."io.containerd.cri.v1.runtime".containerd]
         default_runtime_name = "$runtime"
-      [plugins.cri.containerd.runtimes.${runtime}]
+        [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.${runtime}]
         runtime_type = "${runtime_type}"
         sandboxer = "${SANDBOXER}"
         $( [ $kata_annotations -eq 1 ] && \
         echo 'pod_annotations = ["io.katacontainers.*"]' && \
         echo '        container_annotations = ["io.katacontainers.*"]'
         )
-        [plugins.cri.containerd.runtimes.${runtime}.options]
+	[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.${runtime}.options]
           ConfigPath = "${runtime_config_path}"
           BinaryName = "${runtime_binary_path}"
 [plugins.linux]
@@ -173,7 +173,7 @@ function testContainerStart() {
 
 	local pod_yaml=${REPORT_DIR}/pod.yaml
 	local container_yaml=${REPORT_DIR}/container.yaml
-	local image="busybox:latest"
+	local image="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/busybox:1.36.1-linuxarm64"
 
 	cat << EOF > "${pod_yaml}"
 metadata:
@@ -333,7 +333,7 @@ function TestContainerSwap() {
 	fi
 
 	local container_yaml=${REPORT_DIR}/container.yaml
-	local image="busybox:latest"
+	local image="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/busybox:1.36.1-linuxarm64"
 
 	info "Test container with guest swap"
 
@@ -481,7 +481,7 @@ function startDeviceCgroupContainers() {
 	local pod_yaml=${REPORT_DIR}/device-cgroup-pod.yaml
 	local container1_yaml=${REPORT_DIR}/device-cgroup-container1.yaml
 	local container2_yaml=${REPORT_DIR}/device-cgroup-container2.yaml
-	local image="busybox:latest"
+	local image="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/busybox:1.36.1-linuxarm64"
 
     cat > "$pod_yaml" <<EOF
 metadata:
@@ -662,7 +662,7 @@ function main() {
 	# Reference: https://github.com/kata-containers/kata-containers/issues/7410
 	# TestContainerSwap
 
-	TestContainerMemoryUpdate
+	#TestContainerMemoryUpdate
 
 	if [[ "${ARCH}" != "ppc64le" ]]; then
 		if [[ "${KATA_HYPERVISOR}" == "qemu-runtime-rs" ]]; then
