@@ -45,9 +45,15 @@ elif [ "${ovmf_build}" == "arm64" ]; then
 	[ -n "$ovmf_version" ] || ovmf_version=$(get_from_kata_deps ".externals.ovmf.arm64.version")
 	[ -n "$ovmf_package" ] || ovmf_package=$(get_from_kata_deps ".externals.ovmf.arm64.package")
 	[ -n "$package_output_dir" ] || package_output_dir=$(get_from_kata_deps ".externals.ovmf.arm64.package_output_dir")
+elif [ "${ovmf_build}" == "cca" ]; then
+	[ -n "$ovmf_branch" ] || ovmf_=$(get_from_kata_deps ".externals.ovmf.cca.branch")
+	[ -n "$ovmf_package" ] || ovmf_package=$(get_from_kata_deps ".externals.ovmf.cca.package")
+	[ -n "$package_output_dir" ] || package_output_dir=$(get_from_kata_deps ".externals.ovmf.cca.package_output_dir")
 fi
 
-[ -n "$ovmf_version" ] || die "failed to get ovmf version or commit"
+if [ -z "$ovmf_version" ] && [ -z "$ovmf_branch" ]; then
+    die "failed to get ovmf version or branch"
+fi
 [ -n "$ovmf_package" ] || die "failed to get ovmf package or commit"
 [ -n "$package_output_dir" ] || die "failed to get ovmf package or commit"
 
