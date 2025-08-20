@@ -21,6 +21,7 @@ kata_version="${kata_version:-}"
 ovmf_repo="${ovmf_repo:-}"
 ovmf_version="${ovmf_version:-}"
 ovmf_package="${ovmf_package:-}"
+ovmf_branch="${ovmf_branch:-}"
 package_output_dir="${package_output_dir:-}"
 
 if [ -z "$ovmf_repo" ]; then
@@ -46,7 +47,8 @@ elif [ "${ovmf_build}" == "arm64" ]; then
 	[ -n "$ovmf_package" ] || ovmf_package=$(get_from_kata_deps ".externals.ovmf.arm64.package")
 	[ -n "$package_output_dir" ] || package_output_dir=$(get_from_kata_deps ".externals.ovmf.arm64.package_output_dir")
 elif [ "${ovmf_build}" == "cca" ]; then
-	[ -n "$ovmf_branch" ] || ovmf_=$(get_from_kata_deps ".externals.ovmf.cca.branch")
+  ovmf_repo=$(get_from_kata_deps ".externals.ovmf.cca.url")
+	[ -n "$ovmf_branch" ] || ovmf_branch=$(get_from_kata_deps ".externals.ovmf.cca.branch")
 	[ -n "$ovmf_package" ] || ovmf_package=$(get_from_kata_deps ".externals.ovmf.cca.package")
 	[ -n "$package_output_dir" ] || package_output_dir=$(get_from_kata_deps ".externals.ovmf.cca.package_output_dir")
 fi

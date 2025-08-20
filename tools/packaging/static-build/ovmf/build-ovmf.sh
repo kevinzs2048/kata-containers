@@ -29,7 +29,9 @@ toolchain="${toolchain:-GCC5}"
 build_target="${build_target:-RELEASE}"
 
 [ -n "$ovmf_repo" ] || die "failed to get ovmf repo"
-[ -n "$ovmf_version" ] || die "failed to get ovmf version or commit"
+if [ -z "$ovmf_version" ] && [ -z "$ovmf_branch" ]; then
+    die "failed to get ovmf version or branch"
+fi
 [ -n "$ovmf_package" ] || die "failed to get ovmf package or commit"
 [ -n "$package_output_dir" ] || die "failed to get ovmf package or commit"
 
