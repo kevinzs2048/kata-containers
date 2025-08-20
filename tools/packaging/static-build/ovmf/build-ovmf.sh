@@ -75,7 +75,7 @@ if [ "${ovmf_build}" == "tdx" ]; then
 	stat "${build_path_fv}/OVMF.fd"
 	stat "${build_path_fv}/OVMF_CODE.fd"
 	stat "${build_path_fv}/OVMF_VARS.fd"
-elif [ "${ovmf_build}" == "arm64" ]; then
+elif [ "${ovmf_build}" == "arm64" ] || [ "${ovmf_build}" == "cca" ]; then
 	stat "${build_path_fv}/QEMU_EFI.fd"
 	stat "${build_path_fv}/QEMU_VARS.fd"
 else
@@ -86,7 +86,7 @@ fi
 popd
 
 info "Install fd to destdir"
-if [ "${ovmf_build}" == "arm64" ]; then
+if [ "${ovmf_build}" == "arm64" ] || [ "${ovmf_build}" == "cca" ]; then
 	install_dir="${DESTDIR}/${PREFIX}/share/aavmf"
 else
 	install_dir="${DESTDIR}/${PREFIX}/share/ovmf"
@@ -99,7 +99,7 @@ elif [ "${ovmf_build}" == "tdx" ]; then
 	install $build_root/$ovmf_dir/"${build_path_fv}"/OVMF.fd "${install_dir}"
 	install $build_root/$ovmf_dir/"${build_path_fv}"/OVMF_CODE.fd ${install_dir}
 	install $build_root/$ovmf_dir/"${build_path_fv}"/OVMF_VARS.fd ${install_dir}
-elif [ "${ovmf_build}" == "arm64" ]; then
+elif [ "${ovmf_build}" == "arm64" ] || [ "${ovmf_build}" == "cca" ]; then
 	install $build_root/$ovmf_dir/"${build_path_fv}"/QEMU_EFI.fd "${install_dir}/AAVMF_CODE.fd"
 	install $build_root/$ovmf_dir/"${build_path_fv}"/QEMU_VARS.fd "${install_dir}/AAVMF_VARS.fd"
 	# QEMU expects 64MiB CODE and VARS files on ARM/AARCH64 architectures
