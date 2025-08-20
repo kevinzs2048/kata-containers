@@ -18,7 +18,6 @@ ovmf_build="${ovmf_build:-x86_64}"
 ovmf_repo="${ovmf_repo:-}"
 ovmf_version="${ovmf_version:-}"
 ovmf_package="${ovmf_package:-}"
-ovmf_branch="${ovmf_branch:-}"
 package_output_dir="${package_output_dir:-}"
 DESTDIR=${DESTDIR:-${PWD}}
 PREFIX="${PREFIX:-/opt/kata}"
@@ -42,7 +41,7 @@ info "Build ${ovmf_repo} version: ${ovmf_version}"
 
 build_root=$(mktemp -d)
 pushd $build_root
-git clone --single-branch --depth 1 -b "${ovmf_branch}" "${ovmf_repo}"
+git clone --single-branch --depth 1 -b "${ovmf_version}" "${ovmf_repo}"
 cd "${ovmf_dir}"
 git submodule init
 git submodule update

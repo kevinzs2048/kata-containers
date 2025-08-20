@@ -391,7 +391,7 @@ externals:
       package_output_dir: "ArmVirtQemu-AARCH64"
     cca:
       description: "UEFI for arm64 CCA virtual machines."
-      branch: "cca/2025-02-06"
+      version: "cca/2025-02-06"
       url: "https://git.codelinaro.org/linaro/dcap/edk2"
       package: "ArmVirtPkg/ArmVirtQemu.dsc"
       package_output_dir: "ArmVirtQemu-AARCH64"
