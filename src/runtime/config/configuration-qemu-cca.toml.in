@@ -417,7 +417,7 @@ disable_guest_selinux=@DEFDISABLEGUESTSELINUX@
 # sha256 and sha512 as options. The default is sha512. This algorithm is crucial for verifying the integrity of a
 # Realm, a secure execution environment within the larger system. QEMU supports sha256 and sha512 for CCA RME
 # measurements. sha512 is generally preferred on 64-bit architectures due to potential hardware acceleration.
-measurement_algo=@DEFCCAMEASUREMENTALGO@
+measurement_algo="@DEFCCAMEASUREMENTALGO@"
 
 [factory]
 # VM templating support. Once enabled, new VMs are created from template
