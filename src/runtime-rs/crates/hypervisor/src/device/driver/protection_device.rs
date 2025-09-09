@@ -15,6 +15,7 @@ pub enum ProtectionDeviceConfig {
     SevSnp(SevSnpConfig),
     Se,
     Tdx(TdxConfig),
+    Cca(CcaConfig),
 }
 
 #[derive(Debug, Clone)]
@@ -37,6 +38,14 @@ pub struct TdxConfig {
     pub mrconfigid: Option<String>,
     // Debug mode
     pub debug: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct CcaConfig {
+    pub id: String,
+    pub measurement_algo: String,
+    pub firmware: String,
+    pub personalization_value: Option<String>,
 }
 
 #[derive(Debug, Clone)]

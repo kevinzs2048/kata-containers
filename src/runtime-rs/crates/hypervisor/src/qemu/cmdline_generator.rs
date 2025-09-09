@@ -1930,6 +1930,55 @@ impl ToQemuParams for ObjectTdxGuest {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+struct ObjectCcaGuest {
+    // unique ID
+    id: String,
+
+    // Measurement Algo is the algorithm for measurement,
+    // Default is "sha512" for CCA
+    measurement_algo: String,
+
+    // Base64 encoded 64 bytes of data for Init data Digest
+    // Defaults to all zeros.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    personalization_value: Option<String>,
+}
+
+impl std::fmt::Display for ObjectCcaGuest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        serde_json::to_string(self)
+            .map_err(|_| std::fmt::Error)
+            .and_then(|s| write!(f, "{}", s))
+    }
+}
+
+impl ObjectCcaGuest {
+    fn new(id: &str, measurement_algo: &str, personalization_value: &Option<String>) -> Self {
+        ObjectCcaGuest {
+            id: id.to_owned(),
+            measurement_algo: measurement_algo.to_owned(),
+            personalization_value: personalization_value.clone(),
+        }
+    }
+}
+
+#[async_trait]
+impl ToQemuParams for ObjectCcaGuest {
+    async fn qemu_params(&self) -> Result<Vec<String>> {
+        let mut params = Vec::new();
+        params.push("rme-guest".to_owned());
+        params.push(format!("id={}", self.id));
+        params.push(format!("measurement-algorithm={}", self.measurement_algo));
+
+        // if len(self.personalization_value) > 0 {
+        //     params.push(format!("personalization-value={}", self.personalization_value));
+        // }
+        Ok(vec!["-object".to_owned(), params.join(",")])
+    }
+}
+
 /// PCIeRootPortDevice directly attached onto the root bus
 /// -device pcie-root-port,id=rp0,bus=pcie.0,chassis=0,slot=0,multifunction=off,pref64-reserve=<X>B,mem-reserve=<Y>B
 #[derive(Debug, Default)]
@@ -2494,6 +2543,24 @@ impl<'a> QemuCmdLine<'a> {
 
         self.machine
             .set_confidential_guest_support("tdx")
+            .set_nvdimm(false);
+    }
+
+    pub fn add_cca_protection_device(
+        &mut self,
+        id: &str,
+        measurement_algo: &str,
+        firmware: &str,
+        personalization_value: &Option<String>,
+    ) {
+        let cca_object = ObjectCcaGuest::new(id, measurement_algo, personalization_value);
+        self.devices.push(Box::new(cca_object));
+        if !firmware.is_empty() {
+            self.devices.push(Box::new(Bios::new(firmware.to_owned())));
+        }
+
+        self.machine
+            .set_confidential_guest_support("rme0")
             .set_nvdimm(false);
     }
 

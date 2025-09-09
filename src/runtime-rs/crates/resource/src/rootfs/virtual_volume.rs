@@ -34,6 +34,8 @@ const CRI_CONTAINER_TYPE_KEY_LIST: &[&str] = &[
     annotations::crio::CONTAINER_TYPE_LABEL_KEY,
 ];
 
+const NERTCTL_NAMESPACE: &str = "nerdctl/namespace";
+
 /// Retrieves the image reference from OCI spec annotations.
 ///
 /// It checks known Kubernetes CRI and CRI-O annotation keys for the container type.
@@ -65,6 +67,23 @@ pub fn get_image_reference(spec_annotations: &HashMap<String, String>) -> Result
                 };
             }
         }
+    }
+    // There are cases, like when using nerdctl, where the criContainerType
+    // will never be set, leading to this code path.
+    //
+    // nerdctl also doesn't set any mechanism for automatically setting the
+    // image, but as part of it's v2.0.0 release it allows the user to set
+    // any kind of OCI annotation, which we can take advantage of and use.
+    //
+    // With this in mind, let's "fallback" to the default k8s cri image-name
+    // annotation, as documented on our image-pull documentation.
+    if spec_annotations.get(NERTCTL_NAMESPACE).is_some() {
+        let image_name_key = KUBERNETES_CRI_IMAGE_NAME;
+
+        return spec_annotations
+            .get(image_name_key)
+            .map(AsRef::as_ref)
+            .ok_or_else(|| anyhow!("get image reference failed"))
     }
 
     Err(anyhow!("no target image reference found"))

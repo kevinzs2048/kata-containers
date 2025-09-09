@@ -30,7 +30,7 @@ use hypervisor::{dragonball::Dragonball, HYPERVISOR_DRAGONBALL};
 use hypervisor::{qemu::Qemu, HYPERVISOR_QEMU};
 use hypervisor::{utils::get_hvsock_path, HybridVsockConfig, DEFAULT_GUEST_VSOCK_CID};
 use hypervisor::{BlockConfig, Hypervisor};
-use hypervisor::{ProtectionDeviceConfig, SevSnpConfig, TdxConfig};
+use hypervisor::{ProtectionDeviceConfig, SevSnpConfig, TdxConfig, CcaConfig};
 use kata_sys_util::hooks::HookStates;
 use kata_sys_util::protection::{available_guest_protection, GuestProtection};
 use kata_types::capabilities::CapabilityBits;
@@ -423,6 +423,14 @@ impl VirtSandbox {
                     qgs_port: hypervisor_config.security_info.qgs_port,
                     mrconfigid: init_data,
                     debug: false,
+                })))
+            },
+            GuestProtection::Cca => {
+                Ok(Some(ProtectionDeviceConfig::Cca(CcaConfig {
+                    id: "rme0".to_owned(),
+                    measurement_algo: "sha512".to_owned(),
+                    firmware: hypervisor_config.boot_info.firmware.clone(),
+                    personalization_value: init_data,
                 })))
             },
             GuestProtection::NoProtection => Ok(None),

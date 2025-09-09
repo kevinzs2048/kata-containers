@@ -33,6 +33,7 @@ use tokio::{
     net::UnixStream,
     sync::{mpsc, Mutex},
 };
+use tokio::time::{Duration, Instant};
 
 const VSOCK_SCHEME: &str = "vsock";
 
@@ -76,7 +77,7 @@ impl QemuInner {
         Ok(())
     }
 
-    pub(crate) async fn start_vm(&mut self, _timeout: i32) -> Result<()> {
+    pub(crate) async fn start_vm(&mut self, timeout: i32) -> Result<()> {
         info!(sl!(), "Starting QEMU VM");
         let netns = self.netns.clone().unwrap_or_default();
 
@@ -157,6 +158,12 @@ impl QemuInner {
                         &tdx_config.mrconfigid,
                         tdx_config.debug,
                     ),
+                    ProtectionDeviceConfig::Cca(cca_config) => cmdline.add_cca_protection_device(
+                        &cca_config.id,
+                        &cca_config.measurement_algo,
+                        &cca_config.firmware,
+                        &cca_config.personalization_value,
+                    ),
                 },
                 DeviceType::PortDevice(port_device) => {
                     let port_type = port_device.config.port_type;
@@ -222,12 +229,24 @@ impl QemuInner {
 
         tokio::spawn(log_qemu_stderr(stderr, exit_notify));
 
-        match Qmp::new(QMP_SOCKET_FILE) {
-            Ok(qmp) => self.qmp = Some(qmp),
-            Err(e) => {
-                error!(sl!(), "couldn't initialise QMP: {:?}", e);
-                return Err(e);
+        let time_start = Instant::now();
+        loop {
+            match Qmp::new(QMP_SOCKET_FILE) {
+                Ok(qmp) => {
+                    self.qmp = Some(qmp);
+                    break;
+                }
+                Err(e) => {
+                    if time_start.elapsed() >= Duration::from_secs(timeout as u64) {
+                        error!(
+                            sl!(),
+                            "Failed to couldn't initialise QMP(timeout {:?}s): {:?}", timeout, e
+                        );
+                        return Err(e);
+                    }
+                }
             }
+            tokio::time::sleep(Duration::from_millis(50)).await;
         }
 
         //When hypervisor debug is enabled, output the kernel boot messages for debugging.

@@ -13,6 +13,12 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
+// #[cfg(target_arch = "aarch64")]
+// use nix::fcntl::{open, OFlag};
+// use nix::sys::stat::Mode;
+// use nix::unistd::close;
+// use nix::unistd::Uid;
+// use nix::ioctl_readwrite;
 
 #[cfg(any(
     target_arch = "s390x",
@@ -38,6 +44,7 @@ pub enum GuestProtection {
     Snp(SevSnpDetails),
     Pef,
     Se,
+    Cca,
 }
 
 impl fmt::Display for GuestProtection {
@@ -48,6 +55,7 @@ impl fmt::Display for GuestProtection {
             GuestProtection::Snp(details) => write!(f, "snp (cbitpos: {}", details.cbitpos),
             GuestProtection::Pef => write!(f, "pef"),
             GuestProtection::Se => write!(f, "se"),
+            GuestProtection::Cca => write!(f, "cca"),
             GuestProtection::NoProtection => write!(f, "none"),
         }
     }
@@ -189,11 +197,35 @@ pub fn available_guest_protection() -> Result<GuestProtection, ProtectionError> 
     Ok(GuestProtection::NoProtection)
 }
 
+// #[cfg(target_arch = "aarch64")]
+// const KVM_DEVICE: &str = "/dev/kvm";
+// const KVM_CAP_ARM_RME: u64 = 240;
+// ioctl_readwrite!(kvm_check_extension, b'K', 0x03, u64);
+
 #[cfg(target_arch = "aarch64")]
 #[allow(dead_code)]
-// Guest protection is not supported on ARM64.
 pub fn available_guest_protection() -> Result<GuestProtection, ProtectionError> {
-    Ok(GuestProtection::NoProtection)
+    // if !Uid::effective().is_root() {
+    //     return Err(ProtectionError::NoPerms);
+    // }
+    // let kvm_fd = open(
+    //     KVM_DEVICE,
+    //     OFlag::O_RDWR | OFlag::O_CLOEXEC,
+    //     Mode::empty(),
+    // ).map_err(|err| ProtectionError::CheckFailed(err.to_string()))?;
+    //
+    // let mut ext_id: u64 = KVM_CAP_ARM_RME;
+    // unsafe {
+    //     kvm_check_extension(kvm_fd, &mut ext_id).map_err(|err| ProtectionError::CheckFailed(format!("Error kvm_check_extension : {}", err)))?;
+    // }
+    // close(kvm_fd).map_err(|err| ProtectionError::CheckFailed(format!("Error close fd : {}", err)))?;
+    //
+    // if ext_id == 1 {
+    //     Ok(GuestProtection::Cca)
+    // } else {
+    //     Ok(GuestProtection::NoProtection)
+    // }
+    Ok(GuestProtection::Cca)
 }
 
 #[cfg(target_arch = "riscv64")]

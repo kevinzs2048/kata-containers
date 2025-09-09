@@ -463,7 +463,7 @@ impl Qmp {
                 "vectors".to_owned(),
                 (2 * virtio_net_device.get_num_queues() + 2).into(),
             );
-            netdev_frontend_args.insert("mq".to_owned(), "on".into());
+            netdev_frontend_args.insert("mq".to_owned(), true.into());
             netdev_frontend_args.insert("romfile".to_owned(), "".into());
             self.qmp.execute(&qmp::device_add {
                 bus: Some(bus),
